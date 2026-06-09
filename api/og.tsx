@@ -12,18 +12,20 @@ export default async function handler(req: Request) {
   let name = 'TYSM'
   let bio = 'Tip anyone, straight to UPI. No signup, no gateway.'
   let emoji = '💜'
+  let avatar: string | null = null
 
   if (url && key && slug) {
     const supabase = createClient(url, key)
     const { data } = await supabase
       .from('creators')
-      .select('name,bio,emoji')
+      .select('name,bio,emoji,avatar_url')
       .eq('slug', slug)
       .maybeSingle()
     if (data) {
       name = data.name
       bio = data.bio || `Say thanks to ${data.name} with a tip`
       emoji = data.emoji || '😊'
+      avatar = data.avatar_url || null
     }
   }
 
@@ -74,8 +76,24 @@ export default async function handler(req: Request) {
           </div>
         )}
 
-        {/* Emoji avatar */}
-        <div style={{ fontSize: 96, marginBottom: 12, display: 'flex' }}>{emoji}</div>
+        {/* Avatar: photo when available, else emoji */}
+        {avatar ? (
+          <img
+            src={avatar}
+            width={148}
+            height={148}
+            style={{
+              width: 148,
+              height: 148,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              marginBottom: 18,
+              border: '4px solid rgba(212,255,63,0.25)',
+            }}
+          />
+        ) : (
+          <div style={{ fontSize: 96, marginBottom: 12, display: 'flex' }}>{emoji}</div>
+        )}
 
         {/* Name */}
         <div

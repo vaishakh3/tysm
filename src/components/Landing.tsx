@@ -1,4 +1,5 @@
 import { Brand } from './Brand'
+import { AccountNav } from './AccountNav'
 import { navigate } from '../router'
 import { encodeProfile } from '../lib'
 import type { TipProfile } from '../types'
@@ -36,9 +37,13 @@ export function Landing() {
     <div className="page landing">
       <header className="topbar rise rise-1">
         <Brand />
-        <button className="btn btn-ghost" onClick={() => navigate('/create')}>
-          Make page
-        </button>
+        <AccountNav
+          signedOut={
+            <button className="btn btn-ghost" onClick={() => navigate('/create')}>
+              Make page
+            </button>
+          }
+        />
       </header>
 
       <main className="hero">

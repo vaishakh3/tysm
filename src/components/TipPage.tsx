@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Brand } from './Brand'
+import { AccountNav } from './AccountNav'
 import { Qr } from './Qr'
 import { navigate } from '../router'
 import { buildUpiLink } from '../lib'
@@ -106,12 +107,25 @@ export function TipPage({
     <div className="page">
       <header className="topbar rise rise-1">
         <Brand tagline={false} />
+        <AccountNav
+          signedOut={
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/create')}>
+              Make page
+            </button>
+          }
+        />
       </header>
 
       <main className="tip-wrap">
         <div className="tip-card rise rise-1">
           <span className="stamp">TYSM</span>
-          <div className="tip-avatar">{profile.emoji || '😊'}</div>
+          <div className={`tip-avatar ${profile.avatar ? 'tip-avatar-img' : ''}`}>
+            {profile.avatar ? (
+              <img src={profile.avatar} alt={profile.name} />
+            ) : (
+              profile.emoji || '😊'
+            )}
+          </div>
           <h1 className="tip-name">{profile.name}</h1>
           {profile.bio && <p className="tip-bio">{profile.bio}</p>}
           <div className="tip-prompt">Say thanks with a tip 💜</div>
