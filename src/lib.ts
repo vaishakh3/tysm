@@ -1,5 +1,10 @@
 import type { TipProfile } from './types'
 
+/** Remove duplicate numbers while preserving first-seen order. */
+export function dedupe(nums: number[]): number[] {
+  return [...new Set(nums)]
+}
+
 /** Base64url encode a UTF-8 string (URL-safe, no padding). */
 function b64urlEncode(input: string): string {
   const bytes = new TextEncoder().encode(input)
@@ -24,7 +29,7 @@ export function encodeProfile(profile: TipProfile): string {
     u: profile.upi,
     b: profile.bio || undefined,
     e: profile.emoji || undefined,
-    p: profile.presets,
+    p: dedupe(profile.presets),
   }
   return b64urlEncode(JSON.stringify(compact))
 }
@@ -40,8 +45,9 @@ export function decodeProfile(token: string): TipProfile | null {
       p?: unknown
     }
     if (typeof raw.n !== 'string' || typeof raw.u !== 'string') return null
+    if (!isValidUpi(raw.u)) return null
     const presets = Array.isArray(raw.p)
-      ? raw.p.filter((x): x is number => typeof x === 'number' && x > 0)
+      ? dedupe(raw.p.filter((x): x is number => typeof x === 'number' && x > 0))
       : []
     return {
       name: raw.n,

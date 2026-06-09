@@ -68,9 +68,9 @@ export function TipPage({ profile }: { profile: TipProfile | null }) {
           <div className="tip-prompt">Say thanks with a tip 💜</div>
 
           <div className="amount-grid">
-            {profile.presets.map((p) => (
+            {profile.presets.map((p, i) => (
               <button
-                key={p}
+                key={`${p}-${i}`}
                 className={`amount-btn ${amount === p && !custom ? 'amount-active' : ''}`}
                 onClick={() => selectPreset(p)}
               >

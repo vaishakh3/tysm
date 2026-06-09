@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Brand } from './Brand'
 import { Qr } from './Qr'
 import { navigate } from '../useHashRoute'
-import { buildShareUrl, encodeProfile, isValidUpi } from '../lib'
+import { buildShareUrl, dedupe, encodeProfile, isValidUpi } from '../lib'
 import { celebrate } from '../confetti'
 import type { TipProfile } from '../types'
 
@@ -20,11 +20,12 @@ export function CreatePage() {
 
   const presets = useMemo(
     () =>
-      presetText
-        .split(',')
-        .map((s) => parseInt(s.trim(), 10))
-        .filter((n) => Number.isFinite(n) && n > 0)
-        .slice(0, 4),
+      dedupe(
+        presetText
+          .split(',')
+          .map((s) => parseInt(s.trim(), 10))
+          .filter((n) => Number.isFinite(n) && n > 0),
+      ).slice(0, 4),
     [presetText],
   )
 
