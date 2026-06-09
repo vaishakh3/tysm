@@ -4,7 +4,14 @@ import { Qr } from './Qr'
 import { navigate } from '../router'
 import { buildSlugUrl, dedupe, isValidSlug, isValidUpi, slugify } from '../lib'
 import { celebrate } from '../confetti'
-import { createCreator, getMyCreator, isSlugAvailable, updateCreator, type Creator } from '../db'
+import {
+  createCreator,
+  getMyCreator,
+  isSlugAvailable,
+  updateCreator,
+  uploadAvatar,
+  type Creator,
+} from '../db'
 import { supabaseReady } from '../supabase'
 import { signInWithGoogle, signOut, useAuth } from '../auth'
 
@@ -21,7 +28,10 @@ export function CreatePage() {
   const [upi, setUpi] = useState('')
   const [bio, setBio] = useState('')
   const [emoji, setEmoji] = useState('😊')
+  const [avatar, setAvatar] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const [presetText, setPresetText] = useState(DEFAULT_PRESETS)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   const [mine, setMine] = useState<{ ownerId: string; creator: Creator | null } | null>(null)
   const [avail, setAvail] = useState<{ slug: string; free: boolean } | null>(null)
@@ -52,6 +62,7 @@ export function CreatePage() {
         setUpi(creator.upi)
         setBio(creator.bio ?? '')
         setEmoji(creator.emoji ?? '😊')
+        setAvatar(creator.avatar ?? null)
         setPresetText((creator.presets ?? []).join(', '))
       }
     })
@@ -130,6 +141,24 @@ export function CreatePage() {
     )
   }
 
+  const onPickAvatar = async (file: File | undefined) => {
+    if (!file || !user) return
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image is too large — keep it under 5 MB.')
+      return
+    }
+    setError(null)
+    setUploading(true)
+    const url = await uploadAvatar(file, user.id)
+    setUploading(false)
+    if (url) setAvatar(url)
+    else setError('Could not upload that image. Please try again.')
+  }
+
   const submit = async () => {
     if (!ready || saving || !user) return
     setSaving(true)
@@ -141,6 +170,7 @@ export function CreatePage() {
       upi: upi.trim(),
       bio: bio.trim() || undefined,
       emoji,
+      avatar: avatar ?? undefined,
       presets: presets.length ? presets : [49, 99, 199],
     }
     if (editing) {
@@ -221,7 +251,9 @@ export function CreatePage() {
       <Shell>
         <div className="share-card rise">
           <div className="share-head">
-            <span className="share-emoji">{emoji}</span>
+            <span className="share-emoji">
+              {avatar ? <img src={avatar} alt={name.trim()} /> : emoji}
+            </span>
             <div>
               <div className="share-name">You’re live, {name.trim()}! 🎉</div>
               <div className="share-meta">Share this link to start collecting tips.</div>
@@ -357,20 +389,55 @@ export function CreatePage() {
       </label>
 
       <div className="field rise rise-3">
-        <span className="field-label">Pick an avatar</span>
-        <div className="emoji-row">
-          {EMOJIS.map((e) => (
+        <span className="field-label">Profile picture</span>
+        <div className="avatar-pick">
+          <div className="avatar-preview">
+            {avatar ? <img src={avatar} alt="Your profile" /> : <span>{emoji}</span>}
+          </div>
+          <div className="avatar-actions">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                onPickAvatar(e.target.files?.[0])
+                e.target.value = ''
+              }}
+            />
             <button
-              key={e}
               type="button"
-              className={`emoji-btn ${emoji === e ? 'emoji-active' : ''}`}
-              onClick={() => setEmoji(e)}
-              aria-pressed={emoji === e}
+              className="btn btn-secondary btn-sm"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
             >
-              {e}
+              {uploading ? 'Uploading…' : avatar ? 'Change photo' : 'Upload photo'}
             </button>
-          ))}
+            {avatar && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAvatar(null)}>
+                Remove
+              </button>
+            )}
+          </div>
         </div>
+        {!avatar && (
+          <>
+            <span className="hint">or pick an emoji</span>
+            <div className="emoji-row">
+              {EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  className={`emoji-btn ${emoji === e ? 'emoji-active' : ''}`}
+                  onClick={() => setEmoji(e)}
+                  aria-pressed={emoji === e}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <label className="field rise rise-4">

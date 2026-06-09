@@ -6,7 +6,7 @@ export default async function handler(req: Request) {
   const { searchParams } = new URL(req.url)
   const slug = searchParams.get('slug') || ''
 
-  const origin = 'https://tysm.in'
+  const origin = 'https://www.tysm.in'
   let title = 'TYSM — tip me, say thank you so much'
   let description = 'Tip anyone, straight to UPI. No signup, no gateway, no middleman.'
   const image = `${origin}/api/og?slug=${encodeURIComponent(slug)}`
