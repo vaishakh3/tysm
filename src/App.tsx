@@ -1,21 +1,24 @@
-import { useHashRoute } from './useHashRoute'
+import { useLocation } from './router'
 import { Landing } from './components/Landing'
 import { CreatePage } from './components/CreatePage'
 import { TipPage } from './components/TipPage'
-import { decodeProfile } from './lib'
+import { SlugTipPage } from './components/SlugTipPage'
+import { decodeProfile, RESERVED_SLUGS } from './lib'
 
 export default function App() {
-  const route = useHashRoute()
+  const { pathname, hash } = useLocation()
 
-  if (route.startsWith('/t/')) {
-    const token = route.slice('/t/'.length)
-    const profile = decodeProfile(token)
-    return <TipPage profile={profile} />
+  // Legacy offline links: /#/t/<token> (full profile embedded in the URL).
+  if (hash.startsWith('#/t/')) {
+    const token = hash.slice('#/t/'.length)
+    return <TipPage profile={decodeProfile(token)} />
   }
 
-  if (route.startsWith('/create')) {
-    return <CreatePage />
-  }
+  const segment = pathname.replace(/^\/+/, '').split('/')[0]
 
-  return <Landing />
+  if (segment === '') return <Landing />
+  if (segment === 'create') return <CreatePage />
+  if (RESERVED_SLUGS.has(segment)) return <Landing />
+
+  return <SlugTipPage slug={segment} />
 }
