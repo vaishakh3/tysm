@@ -10,8 +10,8 @@ export function Qr({ value, size = 200 }: { value: string; size?: number }) {
     if (!canvas) return
     QRCode.toCanvas(canvas, value, {
       width: size,
-      margin: 1,
-      color: { dark: '#1a1333', light: '#ffffff' },
+      margin: 0,
+      color: { dark: '#14130f', light: '#fbfaf4' },
     }).catch(() => {})
   }, [value, size])
 

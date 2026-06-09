@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Brand } from './Brand'
 import { Qr } from './Qr'
 import { navigate } from '../useHashRoute'
 import { buildShareUrl, encodeProfile, isValidUpi } from '../lib'
+import { celebrate } from '../confetti'
 import type { TipProfile } from '../types'
 
 const EMOJIS = ['😊', '🎨', '🎸', '☕', '📸', '✍️', '🍳', '💻', '🎥', '🧑‍🏫']
@@ -15,6 +16,7 @@ export function CreatePage() {
   const [emoji, setEmoji] = useState('😊')
   const [presetText, setPresetText] = useState(DEFAULT_PRESETS)
   const [copied, setCopied] = useState(false)
+  const celebrated = useRef(false)
 
   const presets = useMemo(
     () =>
@@ -41,6 +43,14 @@ export function CreatePage() {
     return buildShareUrl(encodeProfile(profile))
   }, [ready, name, upi, bio, emoji, presets])
 
+  useEffect(() => {
+    if (ready && !celebrated.current) {
+      celebrated.current = true
+      celebrate()
+    }
+    if (!ready) celebrated.current = false
+  }, [ready])
+
   const copy = async () => {
     if (!shareUrl) return
     await navigator.clipboard.writeText(shareUrl)
@@ -50,15 +60,19 @@ export function CreatePage() {
 
   return (
     <div className="page">
-      <header className="topbar">
+      <header className="topbar rise rise-1">
         <Brand tagline={false} />
       </header>
 
       <main className="form-wrap">
-        <h1 className="form-title">Create your tip page</h1>
-        <p className="form-sub">No account needed — your page lives entirely in its link.</p>
+        <h1 className="form-title rise rise-1">
+          Build your <em>tip page</em>
+        </h1>
+        <p className="form-sub rise rise-2">
+          No account needed — your whole page lives inside its link.
+        </p>
 
-        <label className="field">
+        <label className="field rise rise-2">
           <span className="field-label">Your name or brand</span>
           <input
             className="input"
@@ -69,7 +83,7 @@ export function CreatePage() {
           />
         </label>
 
-        <label className="field">
+        <label className="field rise rise-2">
           <span className="field-label">UPI ID (VPA)</span>
           <input
             className={`input ${upi && !upiValid ? 'input-error' : ''}`}
@@ -85,7 +99,7 @@ export function CreatePage() {
           )}
         </label>
 
-        <label className="field">
+        <label className="field rise rise-3">
           <span className="field-label">
             Short bio <span className="opt">(optional)</span>
           </span>
@@ -98,7 +112,7 @@ export function CreatePage() {
           />
         </label>
 
-        <div className="field">
+        <div className="field rise rise-3">
           <span className="field-label">Pick an avatar</span>
           <div className="emoji-row">
             {EMOJIS.map((e) => (
@@ -115,7 +129,7 @@ export function CreatePage() {
           </div>
         </div>
 
-        <label className="field">
+        <label className="field rise rise-4">
           <span className="field-label">
             Suggested amounts (₹) <span className="opt">(comma separated)</span>
           </span>
@@ -129,12 +143,12 @@ export function CreatePage() {
         </label>
 
         {ready ? (
-          <div className="share-card">
+          <div className="share-card rise">
             <div className="share-head">
               <span className="share-emoji">{emoji}</span>
               <div>
-                <div className="share-name">Your page is ready, {name.trim()}!</div>
-                <div className="share-meta">Share this link to start getting tips.</div>
+                <div className="share-name">Ready, {name.trim()}! 🎉</div>
+                <div className="share-meta">Share this link to start collecting tips.</div>
               </div>
             </div>
 
@@ -146,8 +160,10 @@ export function CreatePage() {
             </div>
 
             <div className="qr-block">
-              <Qr value={shareUrl} size={180} />
-              <span className="qr-cap">Or let people scan this</span>
+              <div className="qr-frame">
+                <Qr value={shareUrl} size={172} />
+              </div>
+              <span className="qr-cap">or let people scan this</span>
             </div>
 
             <button
@@ -158,7 +174,9 @@ export function CreatePage() {
             </button>
           </div>
         ) : (
-          <div className="incomplete">Fill in your name and UPI ID to generate your link.</div>
+          <div className="incomplete rise rise-4">
+            Add your name and a valid UPI ID to generate your link.
+          </div>
         )}
       </main>
     </div>

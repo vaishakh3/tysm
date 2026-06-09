@@ -3,6 +3,7 @@ import { Brand } from './Brand'
 import { Qr } from './Qr'
 import { navigate } from '../useHashRoute'
 import { buildUpiLink } from '../lib'
+import { celebrate, pop } from '../confetti'
 import type { TipProfile } from '../types'
 
 export function TipPage({ profile }: { profile: TipProfile | null }) {
@@ -46,14 +47,21 @@ export function TipPage({ profile }: { profile: TipProfile | null }) {
     )
   }
 
+  const selectPreset = (p: number) => {
+    setAmount(p)
+    setCustom('')
+    pop(0.5, 0.55)
+  }
+
   return (
     <div className="page">
-      <header className="topbar">
+      <header className="topbar rise rise-1">
         <Brand tagline={false} />
       </header>
 
       <main className="tip-wrap">
-        <div className="tip-card">
+        <div className="tip-card rise rise-1">
+          <span className="stamp">TYSM</span>
           <div className="tip-avatar">{profile.emoji || '😊'}</div>
           <h1 className="tip-name">{profile.name}</h1>
           {profile.bio && <p className="tip-bio">{profile.bio}</p>}
@@ -64,10 +72,7 @@ export function TipPage({ profile }: { profile: TipProfile | null }) {
               <button
                 key={p}
                 className={`amount-btn ${amount === p && !custom ? 'amount-active' : ''}`}
-                onClick={() => {
-                  setAmount(p)
-                  setCustom('')
-                }}
+                onClick={() => selectPreset(p)}
               >
                 ₹{p}
               </button>
@@ -97,28 +102,31 @@ export function TipPage({ profile }: { profile: TipProfile | null }) {
             className={`btn btn-primary btn-lg btn-block ${!effectiveAmount ? 'btn-disabled' : ''}`}
             href={effectiveAmount ? upiLink : undefined}
             aria-disabled={!effectiveAmount}
+            onClick={() => effectiveAmount && celebrate()}
           >
-            {effectiveAmount ? `Pay ₹${effectiveAmount} via UPI` : 'Pick an amount'}
+            {effectiveAmount ? `Pay ₹${effectiveAmount} via UPI →` : 'Pick an amount'}
           </a>
-          <div className="tip-hint">Opens your UPI app (GPay, PhonePe, Paytm…)</div>
+          <div className="tip-hint">opens your UPI app — GPay, PhonePe, Paytm…</div>
 
           <details className="qr-fold">
-            <summary>On a computer? Scan to pay</summary>
+            <summary>On a computer? Scan to pay →</summary>
             <div className="qr-block">
               {effectiveAmount ? (
                 <>
-                  <Qr value={upiLink} size={180} />
-                  <span className="qr-cap">Scan with any UPI app to pay ₹{effectiveAmount}</span>
+                  <div className="qr-frame">
+                    <Qr value={upiLink} size={172} />
+                  </div>
+                  <span className="qr-cap">scan with any UPI app to pay ₹{effectiveAmount}</span>
                 </>
               ) : (
-                <span className="qr-cap">Pick an amount to generate a QR.</span>
+                <span className="qr-cap">pick an amount to generate a QR</span>
               )}
             </div>
           </details>
         </div>
 
         <button className="link-btn" onClick={() => navigate('/create')}>
-          Want tips too? Make your own page →
+          Want tips too? <span>Make your own page →</span>
         </button>
       </main>
     </div>
