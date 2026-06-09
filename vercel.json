@@ -1,4 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/:slug([a-z0-9][a-z0-9\\-]{1,29})",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Twitterbot|facebookexternalhit|WhatsApp|TelegramBot|Slackbot|LinkedInBot|Discordbot|Googlebot|bingbot|Pinterestbot|Applebot).*"
+        }
+      ],
+      "destination": "/api/meta?slug=:slug"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
