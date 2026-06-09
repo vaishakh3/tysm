@@ -6,6 +6,35 @@ import { buildUpiLink } from '../lib'
 import { celebrate, pop } from '../confetti'
 import type { TipProfile } from '../types'
 
+function ShareStrip({ name }: { name: string }) {
+  const [copied, setCopied] = useState(false)
+  const pageUrl = window.location.href.split('#')[0].replace(/\/$/, '') || window.location.href
+  const text = `Tip ${name} on TYSM`
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(`${text} ${pageUrl}`)}`
+  const twUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`
+  const copy = async () => {
+    await navigator.clipboard.writeText(pageUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
+  }
+  return (
+    <div className="share-strip rise rise-2">
+      <span className="share-strip-label">Share this page</span>
+      <div className="share-strip-btns">
+        <a className="btn btn-ghost btn-sm" href={waUrl} target="_blank" rel="noopener noreferrer">
+          WhatsApp
+        </a>
+        <a className="btn btn-ghost btn-sm" href={twUrl} target="_blank" rel="noopener noreferrer">
+          X / Twitter
+        </a>
+        <button className="btn btn-ghost btn-sm" onClick={copy}>
+          {copied ? 'Copied!' : 'Copy link'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function TipPage({
   profile,
   loading = false,
@@ -144,6 +173,8 @@ export function TipPage({
             </div>
           </details>
         </div>
+
+        <ShareStrip name={profile.name} />
 
         <button className="link-btn" onClick={() => navigate('/create')}>
           Want tips too? <span>Make your own page →</span>
