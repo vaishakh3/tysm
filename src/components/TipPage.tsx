@@ -1,12 +1,18 @@
 import { useMemo, useState } from 'react'
 import { Brand } from './Brand'
 import { Qr } from './Qr'
-import { navigate } from '../useHashRoute'
+import { navigate } from '../router'
 import { buildUpiLink } from '../lib'
 import { celebrate, pop } from '../confetti'
 import type { TipProfile } from '../types'
 
-export function TipPage({ profile }: { profile: TipProfile | null }) {
+export function TipPage({
+  profile,
+  loading = false,
+}: {
+  profile: TipProfile | null
+  loading?: boolean
+}) {
   const [amount, setAmount] = useState<number | null>(null)
   const [custom, setCustom] = useState('')
   const [note, setNote] = useState('')
@@ -29,6 +35,20 @@ export function TipPage({ profile }: { profile: TipProfile | null }) {
     })
   }, [profile, effectiveAmount, note])
 
+  if (loading) {
+    return (
+      <div className="page">
+        <header className="topbar">
+          <Brand tagline={false} />
+        </header>
+        <main className="empty-state">
+          <div className="empty-emoji loading-pulse">💸</div>
+          <p>Loading this page…</p>
+        </main>
+      </div>
+    )
+  }
+
   if (!profile) {
     return (
       <div className="page">
@@ -37,8 +57,8 @@ export function TipPage({ profile }: { profile: TipProfile | null }) {
         </header>
         <main className="empty-state">
           <div className="empty-emoji">🙈</div>
-          <h2>This tip link looks broken</h2>
-          <p>The link may be incomplete or mistyped. Want to make your own instead?</p>
+          <h2>This page isn’t here</h2>
+          <p>The link may be mistyped, or this page doesn’t exist yet. Want to make your own?</p>
           <button className="btn btn-primary" onClick={() => navigate('/create')}>
             Create a tip page
           </button>

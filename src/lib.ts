@@ -85,8 +85,45 @@ export function buildUpiLink(opts: {
   return `upi://pay?${params.toString()}`
 }
 
-/** Build a full share URL for a profile token using the current origin. */
+/** Build a legacy offline share URL that embeds the full profile token. */
 export function buildShareUrl(token: string): string {
-  const base = `${window.location.origin}${window.location.pathname}`
-  return `${base}#/t/${token}`
+  return `${window.location.origin}/#/t/${token}`
+}
+
+/** Build a vanity share URL, e.g. https://tysm.in/aisha */
+export function buildSlugUrl(slug: string): string {
+  return `${window.location.origin}/${slug}`
+}
+
+/** Slugs we never hand out (route names / reserved words). */
+export const RESERVED_SLUGS = new Set([
+  'create',
+  't',
+  'api',
+  'about',
+  'admin',
+  'app',
+  'assets',
+  'login',
+  'signup',
+  'settings',
+  'privacy',
+  'terms',
+  'index.html',
+  'favicon.ico',
+])
+
+/** Normalize free text into a candidate slug. */
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 30)
+}
+
+/** Valid slug: 2–30 chars, lowercase alphanumerics + hyphens, not reserved. */
+export function isValidSlug(slug: string): boolean {
+  return /^[a-z0-9][a-z0-9-]{1,29}$/.test(slug) && !RESERVED_SLUGS.has(slug)
 }

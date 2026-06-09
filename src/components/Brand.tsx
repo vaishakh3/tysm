@@ -1,4 +1,4 @@
-import { navigate } from '../useHashRoute'
+import { navigate } from '../router'
 
 export function Brand({ tagline = true }: { tagline?: boolean }) {
   return (

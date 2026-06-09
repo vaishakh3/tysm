@@ -1,5 +1,5 @@
 import { Brand } from './Brand'
-import { navigate } from '../useHashRoute'
+import { navigate } from '../router'
 import { encodeProfile } from '../lib'
 import type { TipProfile } from '../types'
 
@@ -30,7 +30,7 @@ const DEMO: TipProfile = {
 }
 
 export function Landing() {
-  const demoRoute = `/t/${encodeProfile(DEMO)}`
+  const demoRoute = `#/t/${encodeProfile(DEMO)}`
 
   return (
     <div className="page landing">
