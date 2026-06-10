@@ -36,6 +36,10 @@ export interface Testimonial {
   authorName: string
   /** Role / company, e.g. "Founder, Acme" */
   authorRole?: string
+  /** Author photo URL (Supabase Storage) */
+  authorAvatar?: string
+  /** Video testimonial URL (Supabase Storage) */
+  videoUrl?: string
   rating: number
   message: string
   approved: boolean

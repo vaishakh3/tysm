@@ -12,8 +12,11 @@ import {
   getAllTestimonials,
   getMySpaces,
   getSpaceBySlug,
+  importTestimonials,
   isSpaceSlugAvailable,
   setTestimonialApproved,
+  updateSpace,
+  uploadSpaceLogo,
 } from '../testimonials'
 import type { Space, Testimonial } from '../types'
 
@@ -77,6 +80,62 @@ function SignedOutGate() {
   )
 }
 
+/** Square logo upload with monogram fallback. */
+function LogoPicker({
+  ownerId,
+  logo,
+  fallback,
+  onChange,
+}: {
+  ownerId: string
+  logo: string | null
+  fallback: string
+  onChange: (url: string | null) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const pick = async (file: File | undefined) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) return setError('Please choose an image file.')
+    if (file.size > 5 * 1024 * 1024) return setError('Image is too large — keep it under 5 MB.')
+    setError(null)
+    setUploading(true)
+    const url = await uploadSpaceLogo(file, ownerId)
+    setUploading(false)
+    if (url) onChange(url)
+    else setError('Could not upload that image. Please try again.')
+  }
+
+  return (
+    <div className="logo-pick">
+      <div className="logo-preview">{logo ? <img src={logo} alt="Logo" /> : <span>{fallback}</span>}</div>
+      <div className="logo-actions">
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            pick(e.target.files?.[0])
+            e.target.value = ''
+          }}
+        />
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          {uploading ? 'Uploading…' : logo ? 'Change logo' : 'Upload logo'}
+        </button>
+        {logo && (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange(null)}>
+            Remove
+          </button>
+        )}
+        {error && <p className="form-error">{error}</p>}
+      </div>
+    </div>
+  )
+}
+
 /** Form to create a new collection space. */
 function CreateSpace({ ownerId, onCreated }: { ownerId: string; onCreated: (s: Space) => void }) {
   const [name, setName] = useState('')
@@ -84,6 +143,7 @@ function CreateSpace({ ownerId, onCreated }: { ownerId: string; onCreated: (s: S
   const [headline, setHeadline] = useState('')
   const [intro, setIntro] = useState('')
   const [color, setColor] = useState('#d4ff3f')
+  const [logo, setLogo] = useState<string | null>(null)
   const [avail, setAvail] = useState<{ slug: string; free: boolean } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -116,7 +176,7 @@ function CreateSpace({ ownerId, onCreated }: { ownerId: string; onCreated: (s: S
     setSaving(true)
     setError(null)
     const res = await createSpace(
-      { slug, name: name.trim(), headline: headline.trim(), intro: intro.trim(), color },
+      { slug, name: name.trim(), headline: headline.trim(), intro: intro.trim(), color, logo: logo || undefined },
       ownerId,
     )
     setSaving(false)
@@ -169,6 +229,9 @@ function CreateSpace({ ownerId, onCreated }: { ownerId: string; onCreated: (s: S
         <span>{color}</span>
       </div>
 
+      <label className="field-label">Logo (optional)</label>
+      <LogoPicker ownerId={ownerId} logo={logo} fallback={(name.trim().charAt(0) || '★').toUpperCase()} onChange={setLogo} />
+
       {error && <p className="form-error">{error}</p>}
       <button className={`btn btn-primary btn-block ${!ready ? 'btn-disabled' : ''}`} onClick={submit} disabled={!ready || saving}>
         {saving ? 'Creating…' : 'Create page →'}
@@ -177,8 +240,159 @@ function CreateSpace({ ownerId, onCreated }: { ownerId: string; onCreated: (s: S
   )
 }
 
+function parseBulk(text: string, spaceId: string) {
+  const rows: { spaceId: string; authorName: string; authorRole?: string; rating: number; message: string }[] = []
+  for (const raw of text.split('\n')) {
+    const line = raw.trim()
+    if (!line) continue
+    const parts = line.split('|').map((p) => p.trim())
+    const authorName = parts[0]
+    let authorRole: string | undefined
+    let rating = 5
+    let message: string
+    if (parts.length >= 4) {
+      authorRole = parts[1] || undefined
+      rating = Math.min(5, Math.max(1, parseInt(parts[2], 10) || 5))
+      message = parts.slice(3).join(' | ')
+    } else if (parts.length === 3) {
+      authorRole = parts[1] || undefined
+      message = parts[2]
+    } else if (parts.length === 2) {
+      message = parts[1]
+    } else {
+      continue
+    }
+    if (authorName && message) rows.push({ spaceId, authorName, authorRole, rating, message })
+  }
+  return rows
+}
+
+/** Owner-side: add a testimonial manually or bulk-import existing reviews. */
+function ImportSection({
+  spaceId,
+  onImported,
+}: {
+  spaceId: string
+  onImported: (rows: Testimonial[]) => void
+}) {
+  const [mode, setMode] = useState<'single' | 'bulk'>('single')
+  const [name, setName] = useState('')
+  const [role, setRole] = useState('')
+  const [rating, setRating] = useState(5)
+  const [message, setMessage] = useState('')
+  const [bulk, setBulk] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState<string | null>(null)
+
+  const toTestimonials = (
+    rows: { spaceId: string; authorName: string; authorRole?: string; rating: number; message: string }[],
+  ): Testimonial[] =>
+    rows.map((r, i) => ({
+      id: `imported-${Date.now()}-${i}`,
+      spaceId: r.spaceId,
+      authorName: r.authorName,
+      authorRole: r.authorRole,
+      rating: r.rating,
+      message: r.message,
+      approved: true,
+      createdAt: new Date().toISOString(),
+    }))
+
+  const addSingle = async () => {
+    if (!name.trim() || !message.trim() || busy) return
+    setBusy(true)
+    setNote(null)
+    const row = { spaceId, authorName: name.trim(), authorRole: role.trim() || undefined, rating, message: message.trim() }
+    const n = await importTestimonials([row])
+    setBusy(false)
+    if (n > 0) {
+      onImported(toTestimonials([row]))
+      setName('')
+      setRole('')
+      setRating(5)
+      setMessage('')
+      setNote('Added 1 testimonial (live).')
+    } else setNote('Could not add that. Please try again.')
+  }
+
+  const addBulk = async () => {
+    if (busy) return
+    const rows = parseBulk(bulk, spaceId)
+    if (rows.length === 0) {
+      setNote('Nothing to import — check the format below.')
+      return
+    }
+    setBusy(true)
+    setNote(null)
+    const n = await importTestimonials(rows)
+    setBusy(false)
+    if (n > 0) {
+      onImported(toTestimonials(rows.slice(0, n)))
+      setBulk('')
+      setNote(`Imported ${n} testimonial${n === 1 ? '' : 's'} (live).`)
+    } else setNote('Could not import. Please try again.')
+  }
+
+  return (
+    <section className="dash-section">
+      <h2>Add or import testimonials</h2>
+      <p className="muted-line">Bring over reviews you already have — they go live immediately.</p>
+      <div className="import-tabs">
+        <button className={`import-tab ${mode === 'single' ? 'import-tab-on' : ''}`} onClick={() => setMode('single')}>
+          Add one
+        </button>
+        <button className={`import-tab ${mode === 'bulk' ? 'import-tab-on' : ''}`} onClick={() => setMode('bulk')}>
+          Bulk paste
+        </button>
+      </div>
+
+      {mode === 'single' ? (
+        <div className="import-single">
+          <div className="collect-row">
+            <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Customer name" maxLength={80} />
+            <input className="input" value={role} onChange={(e) => setRole(e.target.value)} placeholder="Role, company (optional)" maxLength={100} />
+          </div>
+          <div className="import-rating">
+            <span className="field-label">Rating</span>
+            <Stars value={rating} onChange={setRating} size={22} />
+          </div>
+          <textarea
+            className="input collect-message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="What did they say?"
+            maxLength={1000}
+            rows={3}
+          />
+          <button className={`btn btn-primary btn-sm ${!name.trim() || !message.trim() ? 'btn-disabled' : ''}`} onClick={addSingle} disabled={busy || !name.trim() || !message.trim()}>
+            {busy ? 'Adding…' : 'Add testimonial →'}
+          </button>
+        </div>
+      ) : (
+        <div className="import-bulk">
+          <textarea
+            className="input collect-message"
+            value={bulk}
+            onChange={(e) => setBulk(e.target.value)}
+            placeholder={'One per line:\nPriya Nair | Regular | 5 | Best coffee in town!\nArjun | 4 | Great service\nMeera | Loved it'}
+            rows={6}
+          />
+          <p className="import-hint">
+            Format per line: <code>Name | Role | Rating | Message</code>. Role and rating are optional —{' '}
+            <code>Name | Message</code> also works.
+          </p>
+          <button className="btn btn-primary btn-sm" onClick={addBulk} disabled={busy}>
+            {busy ? 'Importing…' : 'Import all →'}
+          </button>
+        </div>
+      )}
+      {note && <p className="import-note">{note}</p>}
+    </section>
+  )
+}
+
 /** Per-space management: share links, embed, and approve/reject testimonials. */
-function ManageSpace({ slug }: { slug: string }) {
+function ManageSpace({ slug, ownerId }: { slug: string; ownerId: string }) {
   const [space, setSpace] = useState<Space | null | undefined>(undefined)
   const [items, setItems] = useState<Testimonial[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -194,6 +408,12 @@ function ManageSpace({ slug }: { slug: string }) {
       active = false
     }
   }, [slug])
+
+  const setLogo = async (url: string | null) => {
+    if (!space) return
+    setSpace({ ...space, logo: url ?? undefined })
+    await updateSpace(space.id, { logo: url })
+  }
 
   const counts = useMemo(() => {
     const list = items ?? []
@@ -221,7 +441,8 @@ function ManageSpace({ slug }: { slug: string }) {
 
   const collectUrl = `${SITE}/c/${space.slug}`
   const wallUrl = `${SITE}/w/${space.slug}`
-  const embed = `<iframe src="${SITE}/embed/${space.slug}" width="100%" height="600" style="border:0" loading="lazy" title="${space.name} testimonials"></iframe>`
+  const scriptEmbed = `<script src="${SITE}/embed.js" data-tysm="${space.slug}" async></script>`
+  const iframeEmbed = `<iframe src="${SITE}/embed/${space.slug}" width="100%" height="600" style="border:0" loading="lazy" title="${space.name} testimonials"></iframe>`
 
   const update = (id: string, patch: Partial<Testimonial>) =>
     setItems((cur) => (cur ?? []).map((t) => (t.id === id ? { ...t, ...patch } : t)))
@@ -253,10 +474,21 @@ function ManageSpace({ slug }: { slug: string }) {
       <h1 className="dash-title">{space.name}</h1>
 
       <section className="dash-section">
+        <h2>Branding</h2>
+        <LogoPicker
+          ownerId={ownerId}
+          logo={space.logo ?? null}
+          fallback={(space.name.charAt(0) || '★').toUpperCase()}
+          onChange={setLogo}
+        />
+      </section>
+
+      <section className="dash-section">
         <h2>Share &amp; embed</h2>
         <CopyRow label="Collect link (send to customers)" value={collectUrl} />
         <CopyRow label="Wall of love (public page)" value={wallUrl} />
-        <CopyRow label="Embed on your website" value={embed} />
+        <CopyRow label="One-line embed (auto-resizing — recommended)" value={scriptEmbed} />
+        <CopyRow label="Iframe embed (fixed height)" value={iframeEmbed} />
         <div className="dash-quick">
           <a className="btn btn-ghost btn-sm" href={`/c/${space.slug}`} target="_blank" rel="noreferrer">
             Open collect page →
@@ -266,6 +498,11 @@ function ManageSpace({ slug }: { slug: string }) {
           </a>
         </div>
       </section>
+
+      <ImportSection
+        spaceId={space.id}
+        onImported={(rows) => setItems((cur) => [...rows, ...(cur ?? [])])}
+      />
 
       <section className="dash-section">
         <h2>
@@ -288,10 +525,16 @@ function ManageSpace({ slug }: { slug: string }) {
                     {t.approved ? 'Live' : 'Pending'}
                   </span>
                 </div>
+                {t.videoUrl && (
+                  <video className="review-video" src={t.videoUrl} controls playsInline preload="metadata" />
+                )}
                 <p className="review-msg">{t.message}</p>
                 <div className="review-author">
-                  <b>{t.authorName}</b>
-                  {t.authorRole && <small>{t.authorRole}</small>}
+                  {t.authorAvatar && <img className="review-avatar" src={t.authorAvatar} alt={t.authorName} />}
+                  <span className="review-author-meta">
+                    <b>{t.authorName}</b>
+                    {t.authorRole && <small>{t.authorRole}</small>}
+                  </span>
                 </div>
                 <div className="review-actions">
                   <button className="btn btn-sm accent-btn" onClick={() => toggle(t)} disabled={busy === t.id}>
@@ -345,7 +588,7 @@ export function WallsDashboard({ slug }: { slug?: string }) {
             Sign out
           </button>
         </header>
-        <ManageSpace slug={slug} />
+        <ManageSpace slug={slug} ownerId={user.id} />
       </div>
     )
   }
@@ -376,8 +619,8 @@ export function WallsDashboard({ slug }: { slug?: string }) {
             <div className="space-list rise rise-3">
               {spaces?.map((s) => (
                 <button key={s.id} className="space-tile" onClick={() => navigate(`/walls/${s.slug}`)}>
-                  <span className="space-tile-mark" style={{ background: s.color || '#d4ff3f' }}>
-                    {s.name.charAt(0).toUpperCase()}
+                  <span className="space-tile-mark" style={{ background: s.logo ? 'transparent' : s.color || '#d4ff3f' }}>
+                    {s.logo ? <img src={s.logo} alt="" /> : s.name.charAt(0).toUpperCase()}
                   </span>
                   <span className="space-tile-meta">
                     <b>{s.name}</b>
