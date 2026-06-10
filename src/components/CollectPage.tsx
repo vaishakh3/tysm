@@ -1,9 +1,10 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Brand } from './Brand'
 import { Stars } from './Stars'
+import { VideoRecorder } from './VideoRecorder'
 import { navigate } from '../router'
 import { celebrate } from '../confetti'
-import { getSpaceBySlug, submitTestimonial } from '../testimonials'
+import { getSpaceBySlug, submitTestimonial, uploadTestimonialMedia } from '../testimonials'
 import type { Space } from '../types'
 
 /** Public page where customers leave a testimonial for a space (/c/<slug>). */
@@ -13,9 +14,19 @@ export function CollectPage({ slug }: { slug: string }) {
   const [message, setMessage] = useState('')
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [video, setVideo] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const photoRef = useRef<HTMLInputElement>(null)
+
+  const photoPreview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo])
+  useEffect(() => {
+    return () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview)
+    }
+  }, [photoPreview])
 
   useEffect(() => {
     let active = true
@@ -33,14 +44,50 @@ export function CollectPage({ slug }: { slug: string }) {
   const accent = { '--accent': space?.color || '#d4ff3f' } as CSSProperties
   const ready = message.trim().length > 0 && name.trim().length > 0
 
+  const onPickPhoto = (file: File | undefined) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Photo is too large — keep it under 5 MB.')
+      return
+    }
+    setError(null)
+    setPhoto(file)
+  }
+
   const submit = async () => {
     if (!ready || sending || !space) return
     setSending(true)
     setError(null)
+    let authorAvatar: string | undefined
+    let videoUrl: string | undefined
+    if (photo) {
+      const url = await uploadTestimonialMedia(photo, space.id, 'photo')
+      if (!url) {
+        setSending(false)
+        setError('Could not upload your photo. Remove it or try again.')
+        return
+      }
+      authorAvatar = url
+    }
+    if (video) {
+      const url = await uploadTestimonialMedia(video, space.id, 'video')
+      if (!url) {
+        setSending(false)
+        setError('Could not upload your video. Remove it or try again.')
+        return
+      }
+      videoUrl = url
+    }
     const ok = await submitTestimonial({
       spaceId: space.id,
       authorName: name.trim(),
       authorRole: role.trim() || undefined,
+      authorAvatar,
+      videoUrl,
       rating,
       message: message.trim(),
     })
@@ -138,6 +185,42 @@ export function CollectPage({ slug }: { slug: string }) {
                   placeholder="Role, company (optional)"
                   maxLength={100}
                 />
+              </div>
+
+              <div className="collect-media">
+                <div className="collect-photo">
+                  <div className="collect-photo-preview">
+                    {photoPreview ? <img src={photoPreview} alt="" /> : (name.trim().charAt(0).toUpperCase() || '🙂')}
+                  </div>
+                  <div className="collect-photo-actions">
+                    <span className="field-label">Your photo (optional)</span>
+                    <input
+                      ref={photoRef}
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => {
+                        onPickPhoto(e.target.files?.[0])
+                        e.target.value = ''
+                      }}
+                    />
+                    <div className="vid-actions">
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => photoRef.current?.click()}>
+                        {photo ? 'Change photo' : 'Add photo'}
+                      </button>
+                      {photo && (
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPhoto(null)}>
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="collect-video">
+                  <span className="field-label">Add a video testimonial (optional)</span>
+                  <VideoRecorder value={video} onChange={setVideo} />
+                </div>
               </div>
 
               {error && <p className="form-error">{error}</p>}

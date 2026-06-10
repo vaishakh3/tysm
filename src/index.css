@@ -1018,9 +1018,66 @@ body::after {
 .badge-live { color: var(--lime-deep); background: rgba(212, 255, 63, 0.12); }
 .badge-pending { color: #ffc83d; background: rgba(255, 200, 61, 0.12); }
 .review-msg { margin: 0 0 12px; line-height: 1.5; font-size: 14.5px; }
-.review-author { display: flex; flex-direction: column; line-height: 1.3; margin-bottom: 12px; }
-.review-author small { color: var(--faint); font-size: 12px; }
+.review-author { display: flex; align-items: center; gap: 10px; line-height: 1.3; margin-bottom: 12px; }
+.review-author-meta { display: flex; flex-direction: column; }
+.review-author-meta small { color: var(--faint); font-size: 12px; }
+.review-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.review-video { width: 100%; max-height: 260px; border-radius: var(--radius-sm); background: #000; margin-bottom: 12px; display: block; }
 .review-actions { display: flex; gap: 8px; }
+
+/* media in wall + space tile */
+.wall-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.wall-video { width: 100%; border-radius: 12px; background: #000; margin-bottom: 12px; display: block; }
+.space-tile-mark { overflow: hidden; }
+.space-tile-mark img { width: 100%; height: 100%; object-fit: cover; }
+
+/* logo picker */
+.logo-pick { display: flex; align-items: center; gap: 14px; }
+.logo-preview {
+  width: 64px; height: 64px; border-radius: 16px; flex-shrink: 0;
+  background: var(--ink-3); display: grid; place-items: center;
+  font-family: 'Fraunces', serif; font-weight: 600; font-size: 28px; color: var(--text); overflow: hidden;
+}
+.logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.logo-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.logo-actions .form-error { width: 100%; margin: 4px 0 0; }
+
+/* collect page media */
+.collect-media { margin-top: 18px; display: flex; flex-direction: column; gap: 18px; }
+.collect-photo { display: flex; align-items: center; gap: 14px; }
+.collect-photo-preview {
+  width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+  background: var(--ink-3); display: grid; place-items: center;
+  font-weight: 600; font-size: 22px; overflow: hidden; color: var(--text);
+}
+.collect-photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.collect-photo-actions { display: flex; flex-direction: column; gap: 6px; }
+.collect-photo-actions .field-label { margin: 0; }
+.collect-video .field-label { display: block; margin: 0 0 8px; }
+
+/* video recorder */
+.vid-capture { display: flex; flex-direction: column; gap: 8px; }
+.vid-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.vid-stage { display: flex; flex-direction: column; gap: 8px; }
+.vid-live { width: 100%; max-height: 320px; border-radius: var(--radius-sm); background: #000; display: block; }
+.vid-rec-bar { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', monospace; font-size: 13px; color: var(--muted); }
+.vid-rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--coral); animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* import / add testimonials */
+.import-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.import-tab {
+  font-family: 'Space Grotesk', monospace; font-size: 12.5px; padding: 7px 14px;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--ink-1);
+  color: var(--muted); cursor: pointer; transition: all 0.15s ease;
+}
+.import-tab-on { border-color: var(--lime); color: var(--text); background: rgba(212, 255, 63, 0.08); }
+.import-single, .import-bulk { display: flex; flex-direction: column; gap: 12px; }
+.import-rating { display: flex; align-items: center; gap: 12px; }
+.import-rating .field-label { margin: 0; }
+.import-hint { font-size: 12.5px; color: var(--faint); line-height: 1.5; margin: 0; }
+.import-hint code { font-family: 'Space Grotesk', monospace; background: var(--ink-3); padding: 1px 5px; border-radius: 5px; font-size: 11.5px; }
+.import-note { font-family: 'Space Grotesk', monospace; font-size: 12.5px; color: var(--lime-deep); margin: 12px 0 0; }
 
 @media (min-width: 560px) {
   .collect-row { grid-template-columns: 1fr 1fr; }

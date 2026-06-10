@@ -8,10 +8,19 @@ import type { Space, Testimonial } from '../types'
 function Card({ t }: { t: Testimonial }) {
   return (
     <figure className="wall-card">
+      {t.videoUrl && (
+        <video className="wall-video" src={t.videoUrl} controls playsInline preload="metadata" />
+      )}
       <Stars value={t.rating} size={16} />
       <blockquote>{t.message}</blockquote>
       <figcaption>
-        <span className="wall-avatar">{t.authorName.charAt(0).toUpperCase()}</span>
+        <span className="wall-avatar">
+          {t.authorAvatar ? (
+            <img src={t.authorAvatar} alt={t.authorName} />
+          ) : (
+            t.authorName.charAt(0).toUpperCase()
+          )}
+        </span>
         <span className="wall-meta">
           <b>{t.authorName}</b>
           {t.authorRole && <small>{t.authorRole}</small>}
