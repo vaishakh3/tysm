@@ -12,3 +12,32 @@ export interface TipProfile {
   /** Suggested tip amounts in INR */
   presets: number[]
 }
+
+/** A business's testimonial-collection page. */
+export interface Space {
+  id: string
+  slug: string
+  /** Business / product name */
+  name: string
+  /** Prompt shown to customers, e.g. "Share your experience with Acme" */
+  headline?: string
+  /** Supporting text under the headline */
+  intro?: string
+  /** Brand accent colour as #RRGGBB */
+  color?: string
+  /** Logo URL (Supabase Storage) */
+  logo?: string
+}
+
+/** A single testimonial submitted to a space. */
+export interface Testimonial {
+  id: string
+  spaceId: string
+  authorName: string
+  /** Role / company, e.g. "Founder, Acme" */
+  authorRole?: string
+  rating: number
+  message: string
+  approved: boolean
+  createdAt: string
+}
