@@ -37,13 +37,18 @@ export function Landing() {
     <div className="page landing">
       <header className="topbar rise rise-1">
         <Brand />
-        <AccountNav
-          signedOut={
-            <button className="btn btn-ghost" onClick={() => navigate('/create')}>
-              Make page
-            </button>
-          }
-        />
+        <div className="topbar-nav">
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/walls')}>
+            Collect testimonials
+          </button>
+          <AccountNav
+            signedOut={
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate('/create')}>
+                Make page
+              </button>
+            }
+          />
+        </div>
       </header>
 
       <main className="hero">
