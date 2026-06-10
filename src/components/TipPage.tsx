@@ -7,6 +7,12 @@ import { buildUpiLink } from '../lib'
 import { celebrate, pop } from '../confetti'
 import type { TipProfile } from '../types'
 
+const IS_MOBILE =
+  typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
+/** P2P QR share-&-pay is capped at ₹2,000 per NPCI rules. */
+const QR_P2P_LIMIT = 2000
+
 function ShareStrip({ name }: { name: string }) {
   const [copied, setCopied] = useState(false)
   const pageUrl = window.location.href.split('#')[0].replace(/\/$/, '') || window.location.href
@@ -46,6 +52,8 @@ export function TipPage({
   const [amount, setAmount] = useState<number | null>(null)
   const [custom, setCustom] = useState('')
   const [note, setNote] = useState('')
+  const [upiCopied, setUpiCopied] = useState(false)
+  const [amtCopied, setAmtCopied] = useState(false)
 
   const effectiveAmount = useMemo(() => {
     if (custom.trim()) {
@@ -102,6 +110,23 @@ export function TipPage({
     setCustom('')
     pop(0.5, 0.55)
   }
+
+  const copyUpi = async () => {
+    if (!profile) return
+    await navigator.clipboard.writeText(profile.upi)
+    setUpiCopied(true)
+    pop(0.5, 0.6)
+    setTimeout(() => setUpiCopied(false), 1800)
+  }
+
+  const copyAmount = async () => {
+    if (!effectiveAmount) return
+    await navigator.clipboard.writeText(String(effectiveAmount))
+    setAmtCopied(true)
+    setTimeout(() => setAmtCopied(false), 1800)
+  }
+
+  const overQrLimit = !!effectiveAmount && effectiveAmount > QR_P2P_LIMIT
 
   return (
     <div className="page">
@@ -161,31 +186,66 @@ export function TipPage({
             maxLength={80}
           />
 
-          <a
-            className={`btn btn-primary btn-lg btn-block ${!effectiveAmount ? 'btn-disabled' : ''}`}
-            href={effectiveAmount ? upiLink : undefined}
-            aria-disabled={!effectiveAmount}
-            onClick={() => effectiveAmount && celebrate()}
-          >
-            {effectiveAmount ? `Pay ₹${effectiveAmount} via UPI →` : 'Pick an amount'}
-          </a>
-          <div className="tip-hint">opens your UPI app — GPay, PhonePe, Paytm…</div>
+          {effectiveAmount ? (
+            <div className="pay-panel">
+              <div className="qr-block">
+                <div className="qr-frame">
+                  <Qr value={upiLink} size={196} />
+                </div>
+                <span className="qr-cap">
+                  {IS_MOBILE
+                    ? 'Press & hold to save, then open your UPI app → Scan → from Gallery'
+                    : `Scan with any UPI app to pay ₹${effectiveAmount}`}
+                </span>
+              </div>
 
-          <details className="qr-fold">
-            <summary>On a computer? Scan to pay →</summary>
-            <div className="qr-block">
-              {effectiveAmount ? (
-                <>
-                  <div className="qr-frame">
-                    <Qr value={upiLink} size={172} />
-                  </div>
-                  <span className="qr-cap">scan with any UPI app to pay ₹{effectiveAmount}</span>
-                </>
-              ) : (
-                <span className="qr-cap">pick an amount to generate a QR</span>
+              <div className="pay-or">
+                <span>or pay to this UPI ID</span>
+              </div>
+
+              <button
+                className={`copy-field ${upiCopied ? 'copy-field-done' : ''}`}
+                onClick={copyUpi}
+              >
+                <span className="copy-field-val">{profile.upi}</span>
+                <span className="copy-field-act">{upiCopied ? 'Copied ✓' : 'Copy'}</span>
+              </button>
+
+              <ol className="pay-steps">
+                <li>Open GPay, PhonePe or Paytm</li>
+                <li>
+                  Tap <b>Pay to UPI ID</b> &amp; paste it
+                </li>
+                <li>
+                  Enter{' '}
+                  <button className="amt-chip" onClick={copyAmount}>
+                    ₹{effectiveAmount} {amtCopied ? '✓' : '⧉'}
+                  </button>{' '}
+                  and send
+                </li>
+              </ol>
+
+              {IS_MOBILE && (
+                <a
+                  className="btn btn-ghost btn-sm btn-block"
+                  href={upiLink}
+                  onClick={() => celebrate()}
+                >
+                  Try opening a UPI app →
+                </a>
               )}
+
+              <p className="pay-note">
+                {overQrLimit
+                  ? 'Over ₹2,000 — the QR may be declined for personal UPI IDs. Use the “Pay to UPI ID” steps above instead.'
+                  : 'Personal UPI IDs can’t accept app-to-app payment links (an NPCI rule since Apr 2024) — pay by scanning the QR or entering the UPI ID.'}
+              </p>
             </div>
-          </details>
+          ) : (
+            <div className="pay-panel-empty">
+              <span className="qr-cap">Pick an amount to get the QR &amp; UPI ID</span>
+            </div>
+          )}
         </div>
 
         <ShareStrip name={profile.name} />
