@@ -1,36 +1,24 @@
-import { useLocation } from './router'
 import { Landing } from './components/Landing'
-import { CreatePage } from './components/CreatePage'
-import { TipPage } from './components/TipPage'
-import { SlugTipPage } from './components/SlugTipPage'
-import { WallsDashboard } from './components/WallsDashboard'
-import { CollectPage } from './components/CollectPage'
-import { WallPage } from './components/WallPage'
-import { decodeProfile, RESERVED_SLUGS } from './lib'
+import { EventFeedbackPage } from './components/EventFeedbackPage'
+import { useLocation } from './router'
 
 export default function App() {
-  const { pathname, hash } = useLocation()
+  const { pathname } = useLocation()
+  const parts = pathname.replace(/^\/+/, '').split('/').filter(Boolean)
 
-  // Legacy offline links: /#/t/<token> (full profile embedded in the URL).
-  if (hash.startsWith('#/t/')) {
-    const token = hash.slice('#/t/'.length)
-    return <TipPage profile={decodeProfile(token)} />
+  if (parts.length === 0 || parts[0] === 'admin') return <Landing />
+
+  if (parts[0] === 'event' && parts[1]) {
+    return <EventFeedbackPage slug={parts[1].toLowerCase()} />
   }
 
-  const parts = pathname.replace(/^\/+/, '').split('/')
-  const segment = parts[0]
-  const sub = parts[1] || ''
-
-  if (segment === '') return <Landing />
-  if (segment === 'create') return <CreatePage />
-
-  // Testimonial product
-  if (segment === 'walls') return <WallsDashboard slug={sub || undefined} />
-  if (segment === 'c') return <CollectPage slug={sub} />
-  if (segment === 'w') return <WallPage slug={sub} />
-  if (segment === 'embed') return <WallPage slug={sub} embed />
-
-  if (RESERVED_SLUGS.has(segment)) return <Landing />
-
-  return <SlugTipPage slug={segment} />
+  return (
+    <div className="page">
+      <main className="empty-state rise rise-1">
+        <span className="kicker">404</span>
+        <h1 className="form-title">That TYSM link is not here.</h1>
+        <p className="form-sub">Check the event URL and try again.</p>
+      </main>
+    </div>
+  )
 }

@@ -1,94 +1,473 @@
-import { Brand } from './Brand'
-import { AccountNav } from './AccountNav'
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { signInWithGoogle, useAuth } from '../auth'
+import {
+  createFeedbackEvent,
+  getFeedbackResponses,
+  isEventSlugAvailable,
+  listMyEvents,
+  setFeedbackEventActive,
+  type FeedbackEvent,
+  type FeedbackResponse,
+} from '../db'
+import {
+  averageRating,
+  buildEventUrl,
+  formatEventDate,
+  formatSubmittedAt,
+  isValidSlug,
+  slugify,
+} from '../lib'
 import { navigate } from '../router'
-import { encodeProfile } from '../lib'
-import type { TipProfile } from '../types'
+import { supabaseReady } from '../supabase'
+import { AccountNav } from './AccountNav'
+import { Brand } from './Brand'
+import { Qr } from './Qr'
+import { Stars } from './Stars'
+import { celebrate } from '../confetti'
 
-const STEPS = [
-  {
-    n: '01',
-    title: 'Make your page',
-    text: 'Add your name and UPI ID. No account, no setup — 20 seconds, done.',
-  },
-  {
-    n: '02',
-    title: 'Share one link',
-    text: 'Drop it in your bio, story, invoice or WhatsApp. A QR comes free.',
-  },
-  {
-    n: '03',
-    title: 'Get thanked',
-    text: 'People pick an amount and pay you straight over UPI. Money is yours.',
-  },
-]
-
-const DEMO: TipProfile = {
-  name: 'Aisha Verma',
-  upi: 'aisha@okhdfcbank',
-  bio: 'Illustrator drawing tiny comics. Buy me a chai ☕',
-  emoji: '🎨',
-  presets: [49, 99, 199],
-}
+type SlugStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'taken'
 
 export function Landing() {
-  const demoRoute = `#/t/${encodeProfile(DEMO)}`
+  const { user, loading: authLoading } = useAuth()
+  const [eventsState, setEventsState] = useState<{ ownerId: string; items: FeedbackEvent[] } | null>(
+    null,
+  )
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [responsesState, setResponsesState] = useState<{
+    eventId: string
+    items: FeedbackResponse[]
+  } | null>(null)
+
+  const [title, setTitle] = useState('')
+  const [slug, setSlug] = useState('')
+  const [description, setDescription] = useState('')
+  const [eventDate, setEventDate] = useState('')
+  const [avail, setAvail] = useState<{ slug: string; free: boolean } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const slugEdited = useRef(false)
+  const events = user && eventsState?.ownerId === user.id ? eventsState.items : []
+  const eventsLoading = Boolean(user && eventsState?.ownerId !== user.id)
+  const selectedEvent = events.find((event) => event.id === selectedId) ?? events[0] ?? null
+  const responses = useMemo(
+    () => (selectedEvent && responsesState?.eventId === selectedEvent.id ? responsesState.items : []),
+    [responsesState, selectedEvent],
+  )
+  const responsesLoading = Boolean(selectedEvent && responsesState?.eventId !== selectedEvent.id)
+
+  useEffect(() => {
+    if (!user) return
+
+    let active = true
+    listMyEvents(user.id).then((items) => {
+      if (!active) return
+      setEventsState({ ownerId: user.id, items })
+      setSelectedId((current) =>
+        current && items.some((event) => event.id === current) ? current : (items[0]?.id ?? null),
+      )
+    })
+
+    return () => {
+      active = false
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!selectedEvent) return
+
+    let active = true
+    getFeedbackResponses(selectedEvent.id).then((items) => {
+      if (!active) return
+      setResponsesState({ eventId: selectedEvent.id, items })
+    })
+
+    return () => {
+      active = false
+    }
+  }, [selectedEvent])
+
+  useEffect(() => {
+    if (!slugEdited.current) setSlug(slugify(title))
+  }, [title])
+
+  const slugValid = slug.length > 0 && isValidSlug(slug)
+
+  useEffect(() => {
+    if (!slugValid) return
+
+    let active = true
+    const id = window.setTimeout(async () => {
+      const free = await isEventSlugAvailable(slug)
+      if (active) setAvail({ slug, free })
+    }, 350)
+
+    return () => {
+      active = false
+      window.clearTimeout(id)
+    }
+  }, [slug, slugValid])
+
+  const resolved = avail && avail.slug === slug
+  const slugStatus: SlugStatus = !slug
+    ? 'idle'
+    : !slugValid
+      ? 'invalid'
+      : resolved
+        ? avail.free
+          ? 'available'
+          : 'taken'
+        : 'checking'
+
+  const ready = title.trim().length > 0 && slugStatus === 'available'
+  const eventUrl = selectedEvent ? buildEventUrl(selectedEvent.slug) : ''
+  const responseAverage = useMemo(
+    () => averageRating(responses.map((response) => response.rating)),
+    [responses],
+  )
+
+  const onSlugChange = (value: string) => {
+    slugEdited.current = true
+    setSlug(
+      value
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/-{2,}/g, '-')
+        .slice(0, 60),
+    )
+  }
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!ready || saving || !user) return
+
+    setSaving(true)
+    setError(null)
+    const result = await createFeedbackEvent(
+      {
+        title: title.trim(),
+        slug,
+        description: description.trim() || undefined,
+        eventDate: eventDate || undefined,
+      },
+      user.id,
+    )
+    setSaving(false)
+
+    if (result.ok) {
+      setEventsState((current) => ({
+        ownerId: user.id,
+        items:
+          current?.ownerId === user.id ? [result.event, ...current.items] : [result.event],
+      }))
+      setSelectedId(result.event.id)
+      setTitle('')
+      setSlug('')
+      setDescription('')
+      setEventDate('')
+      setAvail(null)
+      slugEdited.current = false
+      celebrate()
+      return
+    }
+
+    if (result.reason === 'taken') {
+      setAvail({ slug, free: false })
+      return
+    }
+
+    setError('Could not create that event. Please try again.')
+  }
+
+  const copySelectedLink = async () => {
+    if (!eventUrl) return
+    await navigator.clipboard.writeText(eventUrl)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1400)
+  }
+
+  const toggleActive = async () => {
+    if (!selectedEvent) return
+
+    const next = !selectedEvent.isActive
+    const ok = await setFeedbackEventActive(selectedEvent.id, next)
+    if (!ok) {
+      setError('Could not update the event status.')
+      return
+    }
+
+    setEventsState((current) => {
+      if (!current || current.ownerId !== user?.id) return current
+      return {
+        ...current,
+        items: current.items.map((event) =>
+          event.id === selectedEvent.id ? { ...event, isActive: next } : event,
+        ),
+      }
+    })
+  }
+
+  if (!supabaseReady) {
+    return (
+      <Shell>
+        <div className="empty-state rise rise-1">
+          <span className="kicker">Setup needed</span>
+          <h1 className="form-title">Connect Supabase to start collecting feedback.</h1>
+          <p className="form-sub">
+            Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY after applying the feedback
+            migration.
+          </p>
+        </div>
+      </Shell>
+    )
+  }
+
+  if (authLoading) {
+    return (
+      <Shell>
+        <p className="form-sub rise rise-1">Loading...</p>
+      </Shell>
+    )
+  }
+
+  if (!user) {
+    return (
+      <Shell>
+        <main className="hero admin-hero">
+          <span className="kicker rise rise-1">Event feedback links</span>
+          <h1 className="rise rise-2">
+            Send a TYSM link after every <span className="thanks">meetup.</span>
+          </h1>
+          <p className="sub rise rise-3">
+            Create event-specific forms like tysm.in/event/codex-meetup-june and collect attendee
+            feedback directly in Supabase.
+          </p>
+          <button className="btn btn-primary btn-lg rise rise-3" onClick={() => signInWithGoogle('/')}>
+            Continue with Google
+          </button>
+        </main>
+      </Shell>
+    )
+  }
 
   return (
-    <div className="page landing">
+    <Shell>
+      <main className="admin-shell">
+        <section className="admin-heading rise rise-1">
+          <span className="kicker">Admin</span>
+          <h1 className="form-title">Feedback events</h1>
+          <p className="form-sub">Create a form, share the link, read responses here.</p>
+        </section>
+
+        <section className="dashboard-grid">
+          <form className="panel create-panel rise rise-2" onSubmit={submit}>
+            <div className="panel-head">
+              <div>
+                <h2>New event</h2>
+                <p>Use a clear name attendees will recognise.</p>
+              </div>
+            </div>
+
+            <label className="field">
+              <span className="field-label">Event name</span>
+              <input
+                className="input"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Codex meetup June"
+                maxLength={120}
+              />
+            </label>
+
+            <label className="field">
+              <span className="field-label">Public link</span>
+              <div className="slug-row">
+                <span className="slug-prefix">tysm.in/event/</span>
+                <input
+                  className={`input slug-input ${
+                    slugStatus === 'taken' || slugStatus === 'invalid' ? 'input-error' : ''
+                  }`}
+                  value={slug}
+                  onChange={(event) => onSlugChange(event.target.value)}
+                  placeholder="codex-meetup-june"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  maxLength={60}
+                />
+              </div>
+              {slugStatus === 'checking' && <span className="hint">Checking availability...</span>}
+              {slugStatus === 'available' && (
+                <span className="hint hint-ok">tysm.in/event/{slug} is available</span>
+              )}
+              {slugStatus === 'taken' && (
+                <span className="hint hint-error">tysm.in/event/{slug} is already taken</span>
+              )}
+              {slugStatus === 'invalid' && (
+                <span className="hint hint-error">Use 2-60 lowercase letters, numbers and hyphens.</span>
+              )}
+            </label>
+
+            <label className="field">
+              <span className="field-label">
+                Event date <span className="opt">optional</span>
+              </span>
+              <input
+                className="input"
+                type="date"
+                value={eventDate}
+                onChange={(event) => setEventDate(event.target.value)}
+              />
+            </label>
+
+            <label className="field">
+              <span className="field-label">
+                Prompt <span className="opt">optional</span>
+              </span>
+              <textarea
+                className="input textarea"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Thanks for joining. Your feedback helps shape the next one."
+                maxLength={600}
+                rows={4}
+              />
+            </label>
+
+            {error && <p className="hint hint-error">{error}</p>}
+
+            <button className={`btn btn-primary btn-block ${!ready || saving ? 'btn-disabled' : ''}`}>
+              {saving ? 'Creating...' : 'Create feedback link'}
+            </button>
+          </form>
+
+          <section className="panel events-panel rise rise-3">
+            <div className="panel-head">
+              <div>
+                <h2>Events</h2>
+                <p>{eventsLoading ? 'Loading...' : `${events.length} total`}</p>
+              </div>
+            </div>
+
+            <div className="event-list">
+              {events.length === 0 && !eventsLoading ? (
+                <div className="empty-mini">No events yet.</div>
+              ) : (
+                events.map((event) => (
+                  <button
+                    type="button"
+                    className={`event-item ${selectedEvent?.id === event.id ? 'event-item-active' : ''}`}
+                    key={event.id}
+                    onClick={() => setSelectedId(event.id)}
+                  >
+                    <span>
+                      <strong>{event.title}</strong>
+                      <small>{formatEventDate(event.eventDate)}</small>
+                    </span>
+                    <em>{event.isActive ? 'Open' : 'Closed'}</em>
+                  </button>
+                ))
+              )}
+            </div>
+          </section>
+        </section>
+
+        {selectedEvent && (
+          <section className="panel detail-panel rise rise-4">
+            <div className="detail-layout">
+              <div className="share-box">
+                <div className="panel-head">
+                  <div>
+                    <h2>{selectedEvent.title}</h2>
+                    <p>{selectedEvent.description || 'Ready for attendee feedback.'}</p>
+                  </div>
+                </div>
+
+                <div className="share-link-row">
+                  <input className="input share-input" readOnly value={eventUrl} />
+                  <button className="btn btn-primary" type="button" onClick={copySelectedLink}>
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+
+                <div className="qr-block">
+                  <div className="qr-frame">
+                    <Qr value={eventUrl} size={172} />
+                  </div>
+                  <span className="qr-cap">tysm.in/event/{selectedEvent.slug}</span>
+                </div>
+
+                <div className="detail-actions">
+                  <button className="btn btn-secondary" type="button" onClick={() => navigate(`/event/${selectedEvent.slug}`)}>
+                    Open form
+                  </button>
+                  <button className="btn btn-ghost" type="button" onClick={toggleActive}>
+                    {selectedEvent.isActive ? 'Close form' : 'Reopen form'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="responses-box">
+                <div className="stats-row">
+                  <div>
+                    <strong>{responses.length}</strong>
+                    <span>responses</span>
+                  </div>
+                  <div>
+                    <strong>{responseAverage}</strong>
+                    <span>avg rating</span>
+                  </div>
+                </div>
+
+                <div className="response-list">
+                  {responsesLoading ? (
+                    <div className="empty-mini">Loading responses...</div>
+                  ) : responses.length === 0 ? (
+                    <div className="empty-mini">No responses yet.</div>
+                  ) : (
+                    responses.map((response) => (
+                      <article className="response-item" key={response.id}>
+                        <div className="response-meta">
+                          <strong>{response.attendeeName || 'Anonymous'}</strong>
+                          <span>{formatSubmittedAt(response.createdAt)}</span>
+                        </div>
+                        <Stars value={response.rating} size={18} />
+                        <p>{response.enjoyed}</p>
+                        <p>{response.improve}</p>
+                        {response.anythingElse && <p>{response.anythingElse}</p>}
+                        {response.attendeeEmail && response.allowContact && (
+                          <a href={`mailto:${response.attendeeEmail}`} className="contact-link">
+                            {response.attendeeEmail}
+                          </a>
+                        )}
+                        {response.attendeeEmail && !response.allowContact && (
+                          <span className="contact-muted">No follow-up requested</span>
+                        )}
+                      </article>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+      </main>
+    </Shell>
+  )
+}
+
+function Shell({ children }: { children: ReactNode }) {
+  return (
+    <div className="page admin-page">
       <header className="topbar rise rise-1">
         <Brand />
-        <div className="topbar-nav">
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/walls')}>
-            Collect testimonials
-          </button>
-          <AccountNav
-            signedOut={
-              <button className="btn btn-ghost btn-sm" onClick={() => navigate('/create')}>
-                Make page
-              </button>
-            }
-          />
-        </div>
+        <AccountNav />
       </header>
-
-      <main className="hero">
-        <span className="kicker rise rise-1">UPI-native · no signup · no cut</span>
-        <h1 className="rise rise-2">
-          Get tipped in
-          <span className="thanks">thank&#8209;yous.</span>
-        </h1>
-        <p className="sub rise rise-3">
-          TYSM turns gratitude into income. Spin up a tipping page in seconds and get paid straight
-          to your UPI — no gateway, no middleman, no app to download.
-        </p>
-        <div className="cta-row rise rise-3">
-          <button className="btn btn-primary btn-lg" onClick={() => navigate('/create')}>
-            Make my tip page →
-          </button>
-          <button className="btn btn-secondary btn-lg" onClick={() => navigate(demoRoute)}>
-            See an example
-          </button>
-        </div>
-        <div className="trust rise rise-4">
-          <b>Works with</b> GPay · PhonePe · Paytm · any UPI app
-        </div>
-      </main>
-
-      <section className="steps rise rise-5">
-        {STEPS.map((s) => (
-          <div className="step-row" key={s.n}>
-            <span className="step-num">{s.n}</span>
-            <div>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-            </div>
-          </div>
-        ))}
-      </section>
-
+      {children}
       <footer className="footer">
-        <span>TYSM · {new Date().getFullYear()}</span>
-        <span>tip in two taps</span>
+        <span>TYSM</span>
+        <span>feedback, with gratitude</span>
       </footer>
     </div>
   )

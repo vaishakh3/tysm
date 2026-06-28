@@ -7,30 +7,32 @@ export default async function handler(req: Request) {
   const slug = searchParams.get('slug') || ''
 
   const origin = 'https://www.tysm.in'
-  let title = 'TYSM — tip me, say thank you so much'
-  let description = 'Tip anyone, straight to UPI. No signup, no gateway, no middleman.'
+  let title = 'TYSM — event feedback'
+  let description = 'Share a focused feedback form after every meetup, workshop, or community event.'
   const image = `${origin}/api/og?slug=${encodeURIComponent(slug)}`
-  const pageUrl = slug ? `${origin}/${slug}` : origin
+  const pageUrl = slug ? `${origin}/event/${slug}` : origin
 
   const url = process.env.VITE_SUPABASE_URL
-  const key = process.env.VITE_SUPABASE_ANON_KEY
+  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
 
   if (url && key && slug) {
     const supabase = createClient(url, key)
     const { data } = await supabase
-      .from('creators')
-      .select('name,bio')
+      .from('feedback_events')
+      .select('title,description')
       .eq('slug', slug)
+      .eq('is_active', true)
       .maybeSingle()
+
     if (data) {
-      title = `Tip ${data.name} — TYSM`
-      description = data.bio || `Say thanks to ${data.name} with a tip via UPI`
+      title = `${data.title} feedback — TYSM`
+      description = data.description || `Share feedback for ${data.title}.`
     }
   }
 
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 
-  const html = `<!DOCTYPE html>
+  const html = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />

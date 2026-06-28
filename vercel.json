@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/:slug([a-z0-9][a-z0-9\\-]{1,29})",
+      "source": "/event/:slug([a-z0-9][a-z0-9\\-]{1,59})",
       "has": [
         {
           "type": "header",

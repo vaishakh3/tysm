@@ -26,7 +26,7 @@ export function useAuth(): AuthState {
 }
 
 /** Start the Google OAuth flow, returning to the given path afterwards. */
-export async function signInWithGoogle(redirectPath = '/create'): Promise<void> {
+export async function signInWithGoogle(redirectPath = '/'): Promise<void> {
   if (!supabase) return
   await supabase.auth.signInWithOAuth({
     provider: 'google',

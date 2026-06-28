@@ -6,7 +6,7 @@ export function Brand({ tagline = true }: { tagline?: boolean }) {
       <span className="brand-mark">
         TY<b>SM</b>
       </span>
-      {tagline && <span className="brand-tag">thank you so much</span>}
+      {tagline && <span className="brand-tag">event feedback</span>}
     </button>
   )
 }

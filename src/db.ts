@@ -1,133 +1,208 @@
 import { supabase } from './supabase'
-import { dedupe } from './lib'
-import type { TipProfile } from './types'
 
-export interface Creator extends TipProfile {
+export interface FeedbackEvent {
+  id: string
   slug: string
+  title: string
+  description?: string
+  eventDate?: string
+  isActive: boolean
+  createdAt: string
 }
 
-interface CreatorRow {
-  slug: string
-  name: string
-  upi: string
-  bio: string | null
-  emoji: string | null
-  avatar_url: string | null
-  presets: number[] | null
+export interface FeedbackResponse {
+  id: string
+  eventId: string
+  attendeeName?: string
+  attendeeEmail?: string
+  rating: number
+  enjoyed: string
+  improve: string
+  anythingElse?: string
+  allowContact: boolean
+  createdAt: string
 }
 
-const COLS = 'slug,name,upi,bio,emoji,avatar_url,presets'
+interface FeedbackEventRow {
+  id: string
+  slug: string
+  title: string
+  description: string | null
+  event_date: string | null
+  is_active: boolean
+  created_at: string
+}
 
-function rowToCreator(row: CreatorRow): Creator {
+interface FeedbackResponseRow {
+  id: string
+  event_id: string
+  attendee_name: string | null
+  attendee_email: string | null
+  rating: number
+  enjoyed: string
+  improve: string
+  anything_else: string | null
+  allow_contact: boolean
+  created_at: string
+}
+
+export interface CreateFeedbackEventInput {
+  slug: string
+  title: string
+  description?: string
+  eventDate?: string
+}
+
+export interface SubmitFeedbackInput {
+  eventId: string
+  attendeeName?: string
+  attendeeEmail?: string
+  rating: number
+  enjoyed: string
+  improve: string
+  anythingElse?: string
+  allowContact: boolean
+}
+
+const EVENT_COLS = 'id,slug,title,description,event_date,is_active,created_at'
+const RESPONSE_COLS =
+  'id,event_id,attendee_name,attendee_email,rating,enjoyed,improve,anything_else,allow_contact,created_at'
+
+function rowToEvent(row: FeedbackEventRow): FeedbackEvent {
   return {
+    id: row.id,
     slug: row.slug,
-    name: row.name,
-    upi: row.upi,
-    bio: row.bio ?? undefined,
-    emoji: row.emoji ?? undefined,
-    avatar: row.avatar_url ?? undefined,
-    presets: row.presets?.length ? row.presets : [49, 99, 199],
+    title: row.title,
+    description: row.description ?? undefined,
+    eventDate: row.event_date ?? undefined,
+    isActive: row.is_active,
+    createdAt: row.created_at,
   }
 }
 
-/** Fetch a creator by slug, or null if not found / backend unavailable. */
-export async function getCreatorBySlug(slug: string): Promise<Creator | null> {
-  if (!supabase) return null
-  const { data, error } = await supabase
-    .from('creators')
-    .select(COLS)
-    .eq('slug', slug)
-    .maybeSingle()
-  if (error || !data) return null
-  return rowToCreator(data as CreatorRow)
+function rowToResponse(row: FeedbackResponseRow): FeedbackResponse {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    attendeeName: row.attendee_name ?? undefined,
+    attendeeEmail: row.attendee_email ?? undefined,
+    rating: row.rating,
+    enjoyed: row.enjoyed,
+    improve: row.improve,
+    anythingElse: row.anything_else ?? undefined,
+    allowContact: row.allow_contact,
+    createdAt: row.created_at,
+  }
 }
 
-/** Fetch the page owned by the signed-in user, or null if they have none. */
-export async function getMyCreator(ownerId: string): Promise<Creator | null> {
-  if (!supabase) return null
+export type FeedbackEventResult =
+  | { ok: true; event: FeedbackEvent }
+  | { ok: false; reason: 'auth' | 'backend' | 'taken' }
+
+export async function listMyEvents(ownerId: string): Promise<FeedbackEvent[]> {
+  if (!supabase || !ownerId) return []
+
   const { data, error } = await supabase
-    .from('creators')
-    .select(COLS)
+    .from('feedback_events')
+    .select(EVENT_COLS)
     .eq('owner_id', ownerId)
-    .maybeSingle()
-  if (error || !data) return null
-  return rowToCreator(data as CreatorRow)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+  return (data as FeedbackEventRow[]).map(rowToEvent)
 }
 
-/** Whether a slug is free. Returns false on any backend error (fail safe). */
-export async function isSlugAvailable(slug: string): Promise<boolean> {
-  if (!supabase) return false
+export async function getFeedbackEventBySlug(slug: string): Promise<FeedbackEvent | null> {
+  if (!supabase) return null
+
   const { data, error } = await supabase
-    .from('creators')
+    .from('feedback_events')
+    .select(EVENT_COLS)
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return rowToEvent(data as FeedbackEventRow)
+}
+
+export async function isEventSlugAvailable(slug: string): Promise<boolean> {
+  if (!supabase) return false
+
+  const { data, error } = await supabase
+    .from('feedback_events')
     .select('slug')
     .eq('slug', slug)
     .maybeSingle()
+
   if (error) return false
   return data === null
 }
 
-export type CreateResult =
-  | { ok: true; creator: Creator }
-  | { ok: false; reason: 'taken' | 'backend' | 'auth' }
-
-/** Insert a new creator page owned by the signed-in user. */
-export async function createCreator(input: Creator, ownerId: string): Promise<CreateResult> {
+export async function createFeedbackEvent(
+  input: CreateFeedbackEventInput,
+  ownerId: string,
+): Promise<FeedbackEventResult> {
   if (!supabase) return { ok: false, reason: 'backend' }
   if (!ownerId) return { ok: false, reason: 'auth' }
+
   const { data, error } = await supabase
-    .from('creators')
+    .from('feedback_events')
     .insert({
-      slug: input.slug,
-      name: input.name,
-      upi: input.upi,
-      bio: input.bio || null,
-      emoji: input.emoji || null,
-      avatar_url: input.avatar || null,
-      presets: dedupe(input.presets),
       owner_id: ownerId,
+      slug: input.slug,
+      title: input.title,
+      description: input.description || null,
+      event_date: input.eventDate || null,
     })
-    .select(COLS)
+    .select(EVENT_COLS)
     .single()
+
   if (error) {
     if (error.code === '23505') return { ok: false, reason: 'taken' }
     return { ok: false, reason: 'backend' }
   }
-  return { ok: true, creator: rowToCreator(data as CreatorRow) }
+
+  return { ok: true, event: rowToEvent(data as FeedbackEventRow) }
 }
 
-export type UpdateResult =
-  | { ok: true; creator: Creator }
-  | { ok: false; reason: 'backend' | 'auth' }
+export async function setFeedbackEventActive(id: string, isActive: boolean): Promise<boolean> {
+  if (!supabase || !id) return false
 
-/** Update the signed-in user's page (slug is immutable). */
-export async function updateCreator(input: Creator, ownerId: string): Promise<UpdateResult> {
-  if (!supabase) return { ok: false, reason: 'backend' }
-  if (!ownerId) return { ok: false, reason: 'auth' }
+  const { error } = await supabase
+    .from('feedback_events')
+    .update({ is_active: isActive, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  return !error
+}
+
+export async function getFeedbackResponses(eventId: string): Promise<FeedbackResponse[]> {
+  if (!supabase || !eventId) return []
+
   const { data, error } = await supabase
-    .from('creators')
-    .update({
-      name: input.name,
-      upi: input.upi,
-      bio: input.bio || null,
-      emoji: input.emoji || null,
-      avatar_url: input.avatar || null,
-      presets: dedupe(input.presets),
-    })
-    .eq('owner_id', ownerId)
-    .select(COLS)
-    .single()
-  if (error || !data) return { ok: false, reason: 'backend' }
-  return { ok: true, creator: rowToCreator(data as CreatorRow) }
+    .from('feedback_responses')
+    .select(RESPONSE_COLS)
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+  return (data as FeedbackResponseRow[]).map(rowToResponse)
 }
 
-/** Upload a profile picture to the user's folder; returns its public URL or null. */
-export async function uploadAvatar(file: File, ownerId: string): Promise<string | null> {
-  if (!supabase || !ownerId) return null
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
-  const path = `${ownerId}/${Date.now()}.${ext}`
-  const { error } = await supabase.storage
-    .from('avatars')
-    .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg', cacheControl: '3600' })
-  if (error) return null
-  return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+export async function submitFeedback(input: SubmitFeedbackInput): Promise<boolean> {
+  if (!supabase) return false
+
+  const { error } = await supabase.from('feedback_responses').insert({
+    event_id: input.eventId,
+    attendee_name: input.attendeeName || null,
+    attendee_email: input.attendeeEmail || null,
+    rating: input.rating,
+    enjoyed: input.enjoyed,
+    improve: input.improve,
+    anything_else: input.anythingElse || null,
+    allow_contact: input.allowContact,
+  })
+
+  return !error
 }
