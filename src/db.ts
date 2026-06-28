@@ -17,8 +17,8 @@ export interface FeedbackResponse {
   attendeeName?: string
   attendeeEmail?: string
   rating: number
-  enjoyed: string
-  improve: string
+  enjoyed?: string
+  improve?: string
   anythingElse?: string
   allowContact: boolean
   createdAt: string
@@ -41,8 +41,8 @@ interface FeedbackResponseRow {
   attendee_name: string | null
   attendee_email: string | null
   rating: number
-  enjoyed: string
-  improve: string
+  enjoyed: string | null
+  improve: string | null
   anything_else: string | null
   allow_contact: boolean
   created_at: string
@@ -61,8 +61,8 @@ export interface SubmitFeedbackInput {
   attendeeName?: string
   attendeeEmail?: string
   rating: number
-  enjoyed: string
-  improve: string
+  enjoyed?: string
+  improve?: string
   anythingElse?: string
   allowContact: boolean
 }
@@ -91,8 +91,8 @@ function rowToResponse(row: FeedbackResponseRow): FeedbackResponse {
     attendeeName: row.attendee_name ?? undefined,
     attendeeEmail: row.attendee_email ?? undefined,
     rating: row.rating,
-    enjoyed: row.enjoyed,
-    improve: row.improve,
+    enjoyed: row.enjoyed ?? undefined,
+    improve: row.improve ?? undefined,
     anythingElse: row.anything_else ?? undefined,
     allowContact: row.allow_contact,
     createdAt: row.created_at,
@@ -234,8 +234,8 @@ export async function submitFeedback(input: SubmitFeedbackInput): Promise<boolea
     attendee_name: input.attendeeName || null,
     attendee_email: input.attendeeEmail || null,
     rating: input.rating,
-    enjoyed: input.enjoyed,
-    improve: input.improve,
+    enjoyed: input.enjoyed || null,
+    improve: input.improve || null,
     anything_else: input.anythingElse || null,
     allow_contact: input.allowContact,
   })

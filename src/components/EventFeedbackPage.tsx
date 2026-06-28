@@ -37,7 +37,7 @@ export function EventFeedbackPage({ slug }: { slug: string }) {
 
   const emailLooksOk =
     !allowContact || attendeeEmail.trim().length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(attendeeEmail.trim())
-  const ready = rating > 0 && enjoyed.trim().length > 0 && improve.trim().length > 0 && emailLooksOk
+  const ready = rating > 0 && emailLooksOk
 
   const onSubmit = async (formEvent: FormEvent<HTMLFormElement>) => {
     formEvent.preventDefault()
@@ -146,7 +146,9 @@ export function EventFeedbackPage({ slug }: { slug: string }) {
           </div>
 
           <label className="field">
-            <span className="field-label">What worked well?</span>
+            <span className="field-label">
+              What worked well? <span className="opt">optional</span>
+            </span>
             <textarea
               className="input textarea"
               value={enjoyed}
@@ -158,7 +160,9 @@ export function EventFeedbackPage({ slug }: { slug: string }) {
           </label>
 
           <label className="field">
-            <span className="field-label">What should be better next time?</span>
+            <span className="field-label">
+              What should be better next time? <span className="opt">optional</span>
+            </span>
             <textarea
               className="input textarea"
               value={improve}

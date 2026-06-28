@@ -538,8 +538,8 @@ export function Landing() {
                           <span>{formatSubmittedAt(response.createdAt)}</span>
                         </div>
                         <Stars value={response.rating} size={18} />
-                        <p>{response.enjoyed}</p>
-                        <p>{response.improve}</p>
+                        {response.enjoyed && <p>{response.enjoyed}</p>}
+                        {response.improve && <p>{response.improve}</p>}
                         {response.anythingElse && <p>{response.anythingElse}</p>}
                         {response.attendeeEmail && response.allowContact && (
                           <a href={`mailto:${response.attendeeEmail}`} className="contact-link">
