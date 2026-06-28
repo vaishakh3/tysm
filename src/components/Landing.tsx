@@ -296,23 +296,29 @@ export function Landing() {
               Send a TYSM link after every <span className="thanks">gathering.</span>
             </h1>
             <p className="sub rise rise-3">
-              Create event-specific forms like tysm.in/event/design-workshop and collect attendee
-              feedback directly in Supabase.
+              Give each event a warm little feedback room, then share one short link while the
+              conversations are still fresh.
             </p>
             <button className="btn btn-primary btn-lg rise rise-3" onClick={() => signInWithGoogle('/')}>
               Continue with Google
             </button>
+
+            <section className="landing-flow rise rise-4" aria-label="Feedback link preview">
+              <div className="flow-link">
+                <span className="flow-label">Ready to send</span>
+                <span className="flow-url">tysm.in/event/design-workshop</span>
+              </div>
+              <div className="flow-path" aria-hidden="true">
+                <span>shared</span>
+                <span>opened</span>
+                <span>answered</span>
+              </div>
+            </section>
           </section>
 
           <aside className="landing-art rise rise-3" aria-hidden="true">
             <img src="/art/tysm-feedback-reliquary.png" alt="" />
           </aside>
-
-          <section className="landing-strip rise rise-4" aria-label="Example TYSM event links">
-            <span>tysm.in/event/design-workshop</span>
-            <span>tysm.in/event/product-launch</span>
-            <span>tysm.in/event/office-hours</span>
-          </section>
         </main>
       </Shell>
     )
