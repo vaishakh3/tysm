@@ -6,6 +6,8 @@ import {
   isEventSlugAvailable,
   listMyEvents,
   setFeedbackEventActive,
+  updateFeedbackEventImage,
+  uploadEventImage,
   type FeedbackEvent,
   type FeedbackResponse,
 } from '../db'
@@ -41,6 +43,9 @@ export function Landing() {
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [detailImageUploading, setDetailImageUploading] = useState(false)
   const [eventDate, setEventDate] = useState('')
   const [avail, setAvail] = useState<{ slug: string; free: boolean } | null>(null)
   const [saving, setSaving] = useState(false)
@@ -120,7 +125,7 @@ export function Landing() {
           : 'taken'
         : 'checking'
 
-  const ready = title.trim().length > 0 && slugStatus === 'available'
+  const ready = title.trim().length > 0 && slugStatus === 'available' && !imageUploading
   const eventUrl = selectedEvent ? buildEventUrl(selectedEvent.slug) : ''
   const responseAverage = useMemo(
     () => averageRating(responses.map((response) => response.rating)),
@@ -138,6 +143,54 @@ export function Landing() {
     )
   }
 
+  const uploadImage = async (file: File | undefined, mode: 'create' | 'detail') => {
+    if (!file || !user) return
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.')
+      return
+    }
+    if (file.size > 7 * 1024 * 1024) {
+      setError('Please keep the event image under 7 MB.')
+      return
+    }
+
+    setError(null)
+    if (mode === 'create') setImageUploading(true)
+    else setDetailImageUploading(true)
+
+    const uploadedUrl = await uploadEventImage(file, user.id)
+
+    if (mode === 'create') setImageUploading(false)
+    else setDetailImageUploading(false)
+
+    if (!uploadedUrl) {
+      setError('Could not upload that image. Please try again.')
+      return
+    }
+
+    if (mode === 'create') {
+      setImageUrl(uploadedUrl)
+      return
+    }
+
+    if (!selectedEvent) return
+    const ok = await updateFeedbackEventImage(selectedEvent.id, uploadedUrl)
+    if (!ok) {
+      setError('Image uploaded, but could not attach it to the event.')
+      return
+    }
+
+    setEventsState((current) => {
+      if (!current || current.ownerId !== user.id) return current
+      return {
+        ...current,
+        items: current.items.map((event) =>
+          event.id === selectedEvent.id ? { ...event, imageUrl: uploadedUrl } : event,
+        ),
+      }
+    })
+  }
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!ready || saving || !user) return
@@ -149,6 +202,7 @@ export function Landing() {
         title: title.trim(),
         slug,
         description: description.trim() || undefined,
+        imageUrl: imageUrl || undefined,
         eventDate: eventDate || undefined,
       },
       user.id,
@@ -165,6 +219,7 @@ export function Landing() {
       setTitle('')
       setSlug('')
       setDescription('')
+      setImageUrl(null)
       setEventDate('')
       setAvail(null)
       slugEdited.current = false
@@ -237,10 +292,10 @@ export function Landing() {
         <main className="hero admin-hero">
           <span className="kicker rise rise-1">Event feedback links</span>
           <h1 className="rise rise-2">
-            Send a TYSM link after every <span className="thanks">meetup.</span>
+            Send a TYSM link after every <span className="thanks">gathering.</span>
           </h1>
           <p className="sub rise rise-3">
-            Create event-specific forms like tysm.in/event/codex-meetup-june and collect attendee
+            Create event-specific forms like tysm.in/event/design-workshop and collect attendee
             feedback directly in Supabase.
           </p>
           <button className="btn btn-primary btn-lg rise rise-3" onClick={() => signInWithGoogle('/')}>
@@ -275,7 +330,7 @@ export function Landing() {
                 className="input"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Codex meetup June"
+                placeholder="Design workshop"
                 maxLength={120}
               />
             </label>
@@ -290,7 +345,7 @@ export function Landing() {
                   }`}
                   value={slug}
                   onChange={(event) => onSlugChange(event.target.value)}
-                  placeholder="codex-meetup-june"
+                  placeholder="design-workshop"
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
@@ -319,6 +374,28 @@ export function Landing() {
                 value={eventDate}
                 onChange={(event) => setEventDate(event.target.value)}
               />
+            </label>
+
+            <label className="field">
+              <span className="field-label">
+                Event image <span className="opt">optional</span>
+              </span>
+              {imageUrl ? (
+                <div className="image-preview">
+                  <img src={imageUrl} alt="Event preview" />
+                </div>
+              ) : (
+                <div className="image-empty">Add one event photo for the feedback form header.</div>
+              )}
+              <label className="btn btn-secondary image-picker">
+                {imageUploading ? 'Uploading...' : imageUrl ? 'Change image' : 'Upload image'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={imageUploading}
+                  onChange={(event) => uploadImage(event.target.files?.[0], 'create')}
+                />
+              </label>
             </label>
 
             <label className="field">
@@ -377,6 +454,11 @@ export function Landing() {
           <section className="panel detail-panel rise rise-4">
             <div className="detail-layout">
               <div className="share-box">
+                {selectedEvent.imageUrl && (
+                  <div className="detail-image">
+                    <img src={selectedEvent.imageUrl} alt={selectedEvent.title} />
+                  </div>
+                )}
                 <div className="panel-head">
                   <div>
                     <h2>{selectedEvent.title}</h2>
@@ -402,6 +484,15 @@ export function Landing() {
                   <button className="btn btn-secondary" type="button" onClick={() => navigate(`/event/${selectedEvent.slug}`)}>
                     Open form
                   </button>
+                  <label className="btn btn-secondary image-action">
+                    {detailImageUploading ? 'Uploading...' : selectedEvent.imageUrl ? 'Replace image' : 'Add image'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={detailImageUploading}
+                      onChange={(event) => uploadImage(event.target.files?.[0], 'detail')}
+                    />
+                  </label>
                   <button className="btn btn-ghost" type="button" onClick={toggleActive}>
                     {selectedEvent.isActive ? 'Close form' : 'Reopen form'}
                   </button>

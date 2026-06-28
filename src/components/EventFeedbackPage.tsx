@@ -116,6 +116,11 @@ export function EventFeedbackPage({ slug }: { slug: string }) {
     <PublicShell>
       <main className="feedback-page">
         <section className="event-hero rise rise-1">
+          {event.imageUrl && (
+            <div className="event-hero-image">
+              <img src={event.imageUrl} alt={event.title} />
+            </div>
+          )}
           <span className="kicker">{formatEventDate(event.eventDate)}</span>
           <h1>{event.title}</h1>
           <p>{event.description || 'Thanks for joining. Share what worked and what should improve.'}</p>

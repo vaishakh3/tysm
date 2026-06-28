@@ -8,8 +8,8 @@ export default async function handler(req: Request) {
 
   const origin = 'https://www.tysm.in'
   let title = 'TYSM — event feedback'
-  let description = 'Share a focused feedback form after every meetup, workshop, or community event.'
-  const image = `${origin}/api/og?slug=${encodeURIComponent(slug)}`
+  let description = 'Share a focused feedback form after every workshop, launch, or community event.'
+  let image = `${origin}/api/og?slug=${encodeURIComponent(slug)}`
   const pageUrl = slug ? `${origin}/event/${slug}` : origin
 
   const url = process.env.VITE_SUPABASE_URL
@@ -19,7 +19,7 @@ export default async function handler(req: Request) {
     const supabase = createClient(url, key)
     const { data } = await supabase
       .from('feedback_events')
-      .select('title,description')
+      .select('title,description,image_url')
       .eq('slug', slug)
       .eq('is_active', true)
       .maybeSingle()
@@ -27,6 +27,7 @@ export default async function handler(req: Request) {
     if (data) {
       title = `${data.title} feedback — TYSM`
       description = data.description || `Share feedback for ${data.title}.`
+      image = data.image_url || image
     }
   }
 

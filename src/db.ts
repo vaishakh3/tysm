@@ -5,6 +5,7 @@ export interface FeedbackEvent {
   slug: string
   title: string
   description?: string
+  imageUrl?: string
   eventDate?: string
   isActive: boolean
   createdAt: string
@@ -28,6 +29,7 @@ interface FeedbackEventRow {
   slug: string
   title: string
   description: string | null
+  image_url: string | null
   event_date: string | null
   is_active: boolean
   created_at: string
@@ -50,6 +52,7 @@ export interface CreateFeedbackEventInput {
   slug: string
   title: string
   description?: string
+  imageUrl?: string
   eventDate?: string
 }
 
@@ -64,7 +67,7 @@ export interface SubmitFeedbackInput {
   allowContact: boolean
 }
 
-const EVENT_COLS = 'id,slug,title,description,event_date,is_active,created_at'
+const EVENT_COLS = 'id,slug,title,description,image_url,event_date,is_active,created_at'
 const RESPONSE_COLS =
   'id,event_id,attendee_name,attendee_email,rating,enjoyed,improve,anything_else,allow_contact,created_at'
 
@@ -74,6 +77,7 @@ function rowToEvent(row: FeedbackEventRow): FeedbackEvent {
     slug: row.slug,
     title: row.title,
     description: row.description ?? undefined,
+    imageUrl: row.image_url ?? undefined,
     eventDate: row.event_date ?? undefined,
     isActive: row.is_active,
     createdAt: row.created_at,
@@ -153,6 +157,7 @@ export async function createFeedbackEvent(
       slug: input.slug,
       title: input.title,
       description: input.description || null,
+      image_url: input.imageUrl || null,
       event_date: input.eventDate || null,
     })
     .select(EVENT_COLS)
@@ -175,6 +180,37 @@ export async function setFeedbackEventActive(id: string, isActive: boolean): Pro
     .eq('id', id)
 
   return !error
+}
+
+export async function updateFeedbackEventImage(
+  id: string,
+  imageUrl: string | null,
+): Promise<boolean> {
+  if (!supabase || !id) return false
+
+  const { error } = await supabase
+    .from('feedback_events')
+    .update({ image_url: imageUrl, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  return !error
+}
+
+export async function uploadEventImage(file: File, ownerId: string): Promise<string | null> {
+  if (!supabase || !ownerId) return null
+
+  const ext = (file.name.split('.').pop() || 'jpg')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .slice(0, 5) || 'jpg'
+  const path = `${ownerId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+  const { error } = await supabase.storage
+    .from('event-images')
+    .upload(path, file, { contentType: file.type || 'image/jpeg', cacheControl: '86400' })
+
+  if (error) return null
+  return supabase.storage.from('event-images').getPublicUrl(path).data.publicUrl
 }
 
 export async function getFeedbackResponses(eventId: string): Promise<FeedbackResponse[]> {

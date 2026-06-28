@@ -1,13 +1,13 @@
 # TYSM
 
-Event feedback links for meetups, workshops, and community gatherings.
+Event feedback links for workshops, launches, and community gatherings.
 
-TYSM now pivots from tipping/testimonials into a simple feedback product: an admin creates an event, shares a link like `https://tysm.in/event/codex-meetup-june`, and attendee responses land in Supabase.
+TYSM now pivots from tipping/testimonials into a simple feedback product: an admin creates an event, shares a link like `https://tysm.in/event/design-workshop`, and attendee responses land in Supabase.
 
 ## Flow
 
 1. Sign in as admin with Google.
-2. Create an event with a title, slug, optional date, and prompt.
+2. Create an event with a title, slug, optional date, image, and prompt.
 3. Share the generated event link or QR code.
 4. Attendees submit rating + written feedback.
 5. Admin reads responses from the TYSM dashboard.
