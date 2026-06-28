@@ -288,19 +288,31 @@ export function Landing() {
 
   if (!user) {
     return (
-      <Shell>
-        <main className="hero admin-hero">
-          <span className="kicker rise rise-1">Event feedback links</span>
-          <h1 className="rise rise-2">
-            Send a TYSM link after every <span className="thanks">gathering.</span>
-          </h1>
-          <p className="sub rise rise-3">
-            Create event-specific forms like tysm.in/event/design-workshop and collect attendee
-            feedback directly in Supabase.
-          </p>
-          <button className="btn btn-primary btn-lg rise rise-3" onClick={() => signInWithGoogle('/')}>
-            Continue with Google
-          </button>
+      <Shell landing>
+        <main className="hero admin-hero landing-hero">
+          <section className="landing-copy">
+            <span className="kicker rise rise-1">Event feedback links</span>
+            <h1 className="rise rise-2">
+              Send a TYSM link after every <span className="thanks">gathering.</span>
+            </h1>
+            <p className="sub rise rise-3">
+              Create event-specific forms like tysm.in/event/design-workshop and collect attendee
+              feedback directly in Supabase.
+            </p>
+            <button className="btn btn-primary btn-lg rise rise-3" onClick={() => signInWithGoogle('/')}>
+              Continue with Google
+            </button>
+          </section>
+
+          <aside className="landing-art rise rise-3" aria-hidden="true">
+            <img src="/art/tysm-feedback-reliquary.png" alt="" />
+          </aside>
+
+          <section className="landing-strip rise rise-4" aria-label="Example TYSM event links">
+            <span>tysm.in/event/design-workshop</span>
+            <span>tysm.in/event/product-launch</span>
+            <span>tysm.in/event/office-hours</span>
+          </section>
         </main>
       </Shell>
     )
@@ -548,9 +560,9 @@ export function Landing() {
   )
 }
 
-function Shell({ children }: { children: ReactNode }) {
+function Shell({ children, landing = false }: { children: ReactNode; landing?: boolean }) {
   return (
-    <div className="page admin-page">
+    <div className={`page admin-page ${landing ? 'landing-page' : ''}`}>
       <header className="topbar rise rise-1">
         <Brand />
         <AccountNav />
