@@ -111,6 +111,30 @@ body::after {
   }
 }
 
+@keyframes mobileArtBreath {
+  0%,
+  100% {
+    opacity: 0.52;
+    transform: translate(-50%, -50%) scale(0.96) rotate(-7deg);
+  }
+  50% {
+    opacity: 0.86;
+    transform: translate(-50%, -53%) scale(1.04) rotate(6deg);
+  }
+}
+
+@keyframes mobileArtCrescent {
+  0%,
+  100% {
+    opacity: 0.38;
+    transform: translate(-50%, -50%) scale(0.98) rotate(-16deg);
+  }
+  50% {
+    opacity: 0.64;
+    transform: translate(-50%, -51%) scale(1.02) rotate(-8deg);
+  }
+}
+
 @keyframes ticketGlimmer {
   0%,
   100% {
@@ -1072,17 +1096,41 @@ body::after {
   }
 
   .landing-art {
+    position: relative;
     min-height: auto;
     max-height: 420px;
-    justify-content: flex-start;
+    justify-content: center;
     overflow: hidden;
+  }
+
+  .landing-art::before {
+    top: 52%;
+    left: 54%;
+    width: min(82vw, 350px);
+    aspect-ratio: 0.78;
+    border-radius: 48% 52% 45% 55%;
+    background:
+      radial-gradient(closest-side at 52% 52%, rgba(212, 255, 63, 0.16), transparent 68%),
+      radial-gradient(closest-side at 48% 73%, rgba(255, 106, 69, 0.08), transparent 70%);
+    filter: blur(28px);
+    animation: mobileArtBreath 7s ease-in-out infinite;
+  }
+
+  .landing-art::after {
+    top: 52%;
+    left: 54%;
+    width: min(72vw, 310px);
+    aspect-ratio: 0.72;
+    border-color: rgba(212, 255, 63, 0.13);
+    border-left-color: transparent;
+    border-bottom-color: rgba(255, 106, 69, 0.12);
+    border-radius: 52% 48% 46% 54%;
+    animation: mobileArtCrescent 9s ease-in-out infinite;
   }
 
   .landing-art img {
     width: min(74vw, 360px);
     max-height: 420px;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   .landing-ticket {
