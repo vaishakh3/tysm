@@ -303,15 +303,11 @@ export function Landing() {
               Continue with Google
             </button>
 
-            <section className="landing-flow rise rise-4" aria-label="Feedback link preview">
-              <div className="flow-link">
-                <span className="flow-label">Ready to send</span>
-                <span className="flow-url">tysm.in/event/design-workshop</span>
-              </div>
-              <div className="flow-path" aria-hidden="true">
-                <span>shared</span>
-                <span>opened</span>
-                <span>answered</span>
+            <section className="landing-ticket rise rise-4" aria-label="Feedback link preview">
+              <img className="landing-ticket-art" src="/art/tysm-link-ticket.png" alt="" />
+              <div className="landing-ticket-copy">
+                <span>Event link</span>
+                <strong>tysm.in/event/design-workshop</strong>
               </div>
             </section>
           </section>
