@@ -288,35 +288,101 @@ export function Landing() {
 
   if (!user) {
     return (
-      <Shell landing>
-        <main className="hero admin-hero landing-hero">
-          <section className="landing-copy">
-            <span className="kicker rise rise-1">Event feedback links</span>
-            <h1 className="rise rise-2">
-              Send a TYSM link after every <span className="thanks">gathering.</span>
-            </h1>
-            <p className="sub rise rise-3">
-              Give each event a warm little feedback room, then share one short link while the
-              conversations are still fresh.
-            </p>
-            <button className="btn btn-primary btn-lg rise rise-3" onClick={() => signInWithGoogle('/')}>
-              Continue with Google
+      <div className="anatomy-page">
+        <header className="anatomy-head rise rise-1">
+          <img
+            className="anatomy-head-art"
+            src="/art/tysm-anatomy-head.webp"
+            alt="A sculptural event host wearing a paper TYSM navigation visor"
+          />
+          <nav className="anatomy-nav" aria-label="Main navigation">
+            <Brand tagline={false} />
+            <div className="anatomy-nav-links">
+              <a href="#feedback-preview">Event feedback</a>
+              <a href="#how-it-works">How it works</a>
+            </div>
+            <button className="anatomy-nav-signin" onClick={() => signInWithGoogle('/')}>
+              Admin sign in
             </button>
+          </nav>
+        </header>
 
-            <section className="landing-ticket rise rise-4" aria-label="Feedback link preview">
-              <img className="landing-ticket-art" src="/art/tysm-link-ticket.png" alt="" />
-              <div className="landing-ticket-copy">
-                <span>Event link</span>
-                <strong>tysm.in/event/design-workshop</strong>
+        <main className="anatomy-body rise rise-2">
+          <section className="anatomy-intro">
+            <div className="anatomy-copy">
+              <span className="anatomy-eyebrow">Event feedback, distilled</span>
+              <h1>
+                A small link for the thoughts <em>that stay.</em>
+              </h1>
+              <p>
+                Create a feedback room for any event, then share one memorable link before the
+                room goes quiet.
+              </p>
+              <button className="btn anatomy-cta" onClick={() => signInWithGoogle('/')}>
+                Continue with Google <span aria-hidden="true">&rarr;</span>
+              </button>
+              <small>Only the rating is required. Every written thought is optional.</small>
+            </div>
+
+            <section
+              className="anatomy-feedback-preview"
+              id="feedback-preview"
+              aria-label="Event feedback form preview"
+            >
+              <div className="anatomy-preview-topline">
+                <span>After the event</span>
+                <span>01 / 01</span>
+              </div>
+              <h2>How did it feel?</h2>
+              <Stars value={5} size={38} />
+              <div className="anatomy-preview-field">
+                <span>What worked well?</span>
+                <strong>The room felt alive.</strong>
+              </div>
+              <div className="anatomy-preview-field anatomy-preview-field-muted">
+                <span>What should change?</span>
+                <strong>Optional</strong>
               </div>
             </section>
           </section>
 
-          <aside className="landing-art rise rise-3" aria-hidden="true">
-            <img src="/art/tysm-feedback-reliquary.png" alt="" />
-          </aside>
+          <section className="anatomy-steps" id="how-it-works" aria-labelledby="steps-title">
+            <div className="anatomy-steps-heading">
+              <span>How it works</span>
+              <h2 id="steps-title">From applause to actual signal.</h2>
+            </div>
+            <article>
+              <span>01</span>
+              <h3>Create a room</h3>
+              <p>Name the event and add one image people will recognise.</p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>Share one link</h3>
+              <p>Send it while the conversations and tiny details are fresh.</p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>Feel the room</h3>
+              <p>See the ratings and thoughtful notes together in one place.</p>
+            </article>
+          </section>
+
+          <section className="anatomy-closing" aria-label="TYSM promise">
+            <span>One link.</span>
+            <strong>Five stars.</strong>
+            <em>Honest signal.</em>
+          </section>
         </main>
-      </Shell>
+
+        <footer className="anatomy-feet rise rise-3">
+          <img src="/art/tysm-anatomy-feet.webp" alt="The event host's sculptural shoes" />
+          <div className="anatomy-footnote">
+            <span>TYSM</span>
+            <span>feedback, with gratitude</span>
+          </div>
+        </footer>
+      </div>
     )
   }
 
@@ -562,9 +628,9 @@ export function Landing() {
   )
 }
 
-function Shell({ children, landing = false }: { children: ReactNode; landing?: boolean }) {
+function Shell({ children }: { children: ReactNode }) {
   return (
-    <div className={`page admin-page ${landing ? 'landing-page' : ''}`}>
+    <div className="page admin-page">
       <header className="topbar rise rise-1">
         <Brand />
         <AccountNav />
