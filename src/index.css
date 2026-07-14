@@ -198,11 +198,11 @@ body::after {
 
 .anatomy-nav {
   position: absolute;
-  top: 29.2%;
+  top: 27.6%;
   left: 28.5%;
   z-index: 4;
   width: 43%;
-  min-height: 17%;
+  min-height: 20%;
   display: grid;
   grid-template-columns: auto 1fr 1fr auto;
   align-items: center;
@@ -215,17 +215,18 @@ body::after {
   content: '';
   position: absolute;
   right: 3%;
-  bottom: 17%;
+  top: 17%;
+  bottom: auto;
   left: 3%;
-  height: 46%;
-  border-bottom: 1px solid rgba(24, 21, 16, 0.2);
-  border-radius: 0 0 50% 50%;
+  height: 66%;
+  border-top: 1px solid rgba(24, 21, 16, 0.24);
+  border-radius: 50% 50% 0 0;
   pointer-events: none;
 }
 
 .anatomy-nav .brand {
   color: #171510;
-  transform: translateY(9px) rotate(-3deg);
+  transform: translateY(20px) rotate(-5deg);
 }
 
 .anatomy-nav .brand-mark {
@@ -254,11 +255,11 @@ body::after {
 }
 
 .anatomy-nav-links a:first-child {
-  transform: translateY(-4px) rotate(-1.5deg);
+  transform: translateY(-10px) rotate(-2deg);
 }
 
 .anatomy-nav-links a:last-child {
-  transform: translateY(-4px) rotate(1.5deg);
+  transform: translateY(-10px) rotate(2deg);
 }
 
 .anatomy-nav-links a::after {
@@ -269,8 +270,8 @@ body::after {
   left: 0;
   height: 2px;
   background: var(--lime-deep);
-  transform: scaleX(0.22);
-  transform-origin: left;
+  transform: scaleX(1);
+  transform-origin: center;
   transition: transform 0.18s ease;
 }
 
@@ -278,9 +279,8 @@ body::after {
   color: #000;
 }
 
-.anatomy-nav-links a:hover::after,
-.anatomy-nav-links a:first-child::after {
-  transform: scaleX(1);
+.anatomy-nav-links a:hover::after {
+  transform: translateY(-1px) scaleX(1);
 }
 
 .anatomy-nav-signin {
@@ -295,7 +295,7 @@ body::after {
   font: inherit;
   font-size: 12px;
   font-weight: 800;
-  transform: translateY(9px) rotate(3deg);
+  transform: translateY(20px) rotate(5deg);
   white-space: nowrap;
 }
 
