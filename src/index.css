@@ -199,9 +199,9 @@ body::after {
 .anatomy-nav {
   position: absolute;
   top: 25.4%;
-  left: 27.2%;
+  left: 27.8%;
   z-index: 4;
-  width: 45.6%;
+  width: 44.4%;
   aspect-ratio: 640 / 180;
   color: #171510;
 }
@@ -223,7 +223,7 @@ body::after {
 .anatomy-curve-link text {
   fill: currentColor;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -231,7 +231,7 @@ body::after {
 .anatomy-curve-brand text {
   fill: #171510;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 42px;
+  font-size: 36px;
   font-weight: 400;
 }
 
@@ -257,7 +257,7 @@ body::after {
   fill: none;
   stroke: var(--lime-deep);
   stroke-linecap: round;
-  stroke-width: 4;
+  stroke-width: 3;
   vector-effect: non-scaling-stroke;
 }
 
@@ -275,9 +275,9 @@ body::after {
 
 .anatomy-curve-signin text {
   fill: var(--lime);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 800;
-  font-style: italic;
+  font-style: normal;
 }
 
 .anatomy-curve-signin:hover text,
@@ -1335,15 +1335,15 @@ input[type='date'].input {
 
 @media (min-width: 821px) and (max-width: 980px) {
   .anatomy-curve-link text {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .anatomy-curve-brand text {
-    font-size: 38px;
+    font-size: 34px;
   }
 
   .anatomy-curve-signin text {
-    font-size: 18px;
+    font-size: 16px;
   }
 }
 

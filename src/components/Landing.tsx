@@ -303,10 +303,10 @@ export function Landing() {
             >
               <title id="anatomy-nav-title">TYSM navigation</title>
               <defs>
-                <path id="nav-brand-curve" d="M 48 126 Q 121 91 198 74" />
-                <path id="nav-feedback-curve" d="M 188 75 Q 252 55 314 53" />
-                <path id="nav-how-curve" d="M 326 53 Q 398 57 462 79" />
-                <path id="nav-signin-curve" d="M 466 91 Q 528 111 594 139" />
+                <path id="nav-brand-curve" d="M 60 153 Q 126 120 194 104" />
+                <path id="nav-feedback-curve" d="M 200 105 Q 255 89 308 87" />
+                <path id="nav-how-curve" d="M 332 87 Q 392 91 447 109" />
+                <path id="nav-signin-curve" d="M 494 128 Q 538 142 582 160" />
               </defs>
 
               <a className="anatomy-curve-link anatomy-curve-brand" href="/">
@@ -323,7 +323,7 @@ export function Landing() {
                     Feedback
                   </textPath>
                 </text>
-                <path className="anatomy-curve-underline" d="M 202 85 Q 252 69 300 67" />
+                <path className="anatomy-curve-underline" d="M 210 116 Q 255 102 298 101" />
               </a>
 
               <a className="anatomy-curve-link" href="#how-it-works">
@@ -332,7 +332,7 @@ export function Landing() {
                     How it works
                   </textPath>
                 </text>
-                <path className="anatomy-curve-underline" d="M 339 68 Q 398 71 449 89" />
+                <path className="anatomy-curve-underline" d="M 340 102 Q 392 106 440 122" />
               </a>
 
               <a
@@ -344,9 +344,13 @@ export function Landing() {
                   void signInWithGoogle('/')
                 }}
               >
-                <path
+                <ellipse
                   className="anatomy-curve-signin-shape"
-                  d="M 462 76 Q 528 95 595 124 Q 611 131 607 146 Q 602 163 581 158 Q 520 139 459 115 Q 444 108 448 92 Q 451 80 462 76 Z"
+                  cx="538"
+                  cy="139"
+                  rx="66"
+                  ry="25"
+                  transform="rotate(20 538 139)"
                 />
                 <text>
                   <textPath href="#nav-signin-curve" startOffset="50%" textAnchor="middle">
