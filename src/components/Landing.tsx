@@ -292,17 +292,17 @@ export function Landing() {
         <header className="anatomy-head rise rise-1">
           <img
             className="anatomy-head-art"
-            src="/art/tysm-anatomy-head.webp"
+            src="/art/tysm-anatomy-head-v2.webp"
             alt="A sculptural event host wearing a paper TYSM navigation visor"
           />
           <nav className="anatomy-nav" aria-label="Main navigation">
             <Brand tagline={false} />
             <div className="anatomy-nav-links">
-              <a href="#feedback-preview">Event feedback</a>
+              <a href="#feedback-preview">Feedback</a>
               <a href="#how-it-works">How it works</a>
             </div>
             <button className="anatomy-nav-signin" onClick={() => signInWithGoogle('/')}>
-              Admin sign in
+              Sign in
             </button>
           </nav>
         </header>

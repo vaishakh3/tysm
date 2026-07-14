@@ -154,29 +154,33 @@ body::after {
 }
 
 .anatomy-page {
+  isolation: isolate;
   min-height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
-  background: linear-gradient(90deg, #000 0%, #000 58%, #030501 78%, #0b1007 100%);
+  background:
+    radial-gradient(ellipse 54% 20% at 50% 15%, rgba(212, 255, 63, 0.08), transparent 72%),
+    radial-gradient(ellipse 58% 14% at 50% 94%, rgba(212, 255, 63, 0.07), transparent 76%),
+    #000;
 }
 
 .anatomy-head {
   position: relative;
   z-index: 3;
-  width: min(100%, 1738px);
+  width: min(100%, 1180px);
   margin: 0 auto;
-  aspect-ratio: 1738 / 905;
+  aspect-ratio: 1448 / 1086;
   animation-duration: 0.8s;
 }
 
 .anatomy-head::after {
   content: '';
   position: absolute;
-  bottom: 4%;
+  bottom: 3%;
   left: 50%;
   z-index: -1;
-  width: 56%;
-  height: 24%;
+  width: 74%;
+  height: 18%;
   border-radius: 50%;
   background: rgba(212, 255, 63, 0.1);
   filter: blur(46px);
@@ -188,39 +192,44 @@ body::after {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  mask-composite: intersect;
-  mask-image:
-    linear-gradient(to bottom, #000 0%, #000 89%, transparent 100%),
-    linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  mix-blend-mode: lighten;
   animation: anatomyHover 8s ease-in-out infinite;
-  -webkit-mask-composite: source-in;
-  -webkit-mask-image:
-    linear-gradient(to bottom, #000 0%, #000 89%, transparent 100%),
-    linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
 }
 
 .anatomy-nav {
   position: absolute;
-  top: 28.4%;
-  left: 23.5%;
+  top: 29.2%;
+  left: 28.5%;
   z-index: 4;
-  width: 58%;
-  min-height: 16%;
+  width: 43%;
+  min-height: 17%;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr 1fr auto;
   align-items: center;
-  gap: 36px;
-  padding: 0 3.8%;
+  gap: 10px;
+  padding: 0 3.5%;
   color: #171510;
-  transform: rotate(0.2deg);
+}
+
+.anatomy-nav::before {
+  content: '';
+  position: absolute;
+  right: 3%;
+  bottom: 17%;
+  left: 3%;
+  height: 46%;
+  border-bottom: 1px solid rgba(24, 21, 16, 0.2);
+  border-radius: 0 0 50% 50%;
+  pointer-events: none;
 }
 
 .anatomy-nav .brand {
   color: #171510;
+  transform: translateY(9px) rotate(-3deg);
 }
 
 .anatomy-nav .brand-mark {
-  font-size: 42px;
+  font-size: 31px;
 }
 
 .anatomy-nav .brand-mark b {
@@ -228,32 +237,35 @@ body::after {
 }
 
 .anatomy-nav-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  gap: 34px;
-  padding: 0 22px;
-  border-right: 1px solid rgba(24, 21, 16, 0.18);
-  border-left: 1px solid rgba(24, 21, 16, 0.18);
+  display: contents;
 }
 
 .anatomy-nav-links a {
   position: relative;
-  padding: 12px 0;
+  z-index: 1;
+  justify-self: center;
+  padding: 10px 4px;
   color: #332e25;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 800;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.anatomy-nav-links a:first-child {
+  transform: translateY(-4px) rotate(-1.5deg);
+}
+
+.anatomy-nav-links a:last-child {
+  transform: translateY(-4px) rotate(1.5deg);
 }
 
 .anatomy-nav-links a::after {
   content: '';
   position: absolute;
   right: 0;
-  bottom: 5px;
+  bottom: 4px;
   left: 0;
   height: 2px;
   background: var(--lime-deep);
@@ -272,16 +284,18 @@ body::after {
 }
 
 .anatomy-nav-signin {
-  min-height: 48px;
-  padding: 11px 18px;
+  z-index: 1;
+  min-height: 36px;
+  padding: 8px 13px;
   border: 1px solid #171510;
-  border-radius: 4px;
+  border-radius: 46% 54% 48% 52% / 58% 58% 42% 42%;
   background: #171510;
   color: var(--lime);
   cursor: pointer;
   font: inherit;
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 800;
+  transform: translateY(9px) rotate(3deg);
   white-space: nowrap;
 }
 
@@ -533,7 +547,7 @@ body::after {
 .anatomy-feet {
   position: relative;
   z-index: 2;
-  width: min(100%, 1380px);
+  width: min(100%, 1580px);
   margin: -84px auto 0;
 }
 
@@ -541,6 +555,15 @@ body::after {
   display: block;
   width: 100%;
   height: auto;
+  mix-blend-mode: lighten;
+  mask-composite: intersect;
+  mask-image:
+    linear-gradient(to bottom, #000 0%, #000 88%, transparent 100%),
+    linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+  -webkit-mask-composite: source-in;
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 0%, #000 88%, transparent 100%),
+    linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
 }
 
 .anatomy-footnote {
@@ -1300,35 +1323,31 @@ input[type='date'].input {
   font-size: 12px;
 }
 
-@media (min-width: 821px) and (max-width: 1180px) {
+@media (min-width: 821px) and (max-width: 980px) {
   .anatomy-nav {
-    gap: 14px;
-    padding-inline: 3%;
+    gap: 4px;
+    padding-inline: 2.5%;
   }
 
   .anatomy-nav .brand-mark {
-    font-size: 29px;
-  }
-
-  .anatomy-nav-links {
-    gap: 16px;
+    font-size: 24px;
   }
 
   .anatomy-nav-links a {
-    font-size: 12px;
+    font-size: 10px;
   }
 
   .anatomy-nav-signin {
-    min-height: 38px;
-    padding: 8px 12px;
-    font-size: 12px;
+    min-height: 31px;
+    padding: 7px 10px;
+    font-size: 10px;
   }
 }
 
 @media (max-width: 820px) {
   .anatomy-head {
     width: 100%;
-    height: 382px;
+    height: 540px;
     aspect-ratio: auto;
     overflow: hidden;
   }
@@ -1337,7 +1356,7 @@ input[type='date'].input {
     position: absolute;
     top: 0;
     left: 50%;
-    width: 730px;
+    width: 720px;
     max-width: none;
     height: auto;
     object-fit: initial;
@@ -1351,14 +1370,24 @@ input[type='date'].input {
   }
 
   .anatomy-nav {
-    top: 116px;
+    top: 155px;
     left: 50%;
-    width: min(calc(100% - 34px), 440px);
-    min-height: 70px;
-    grid-template-columns: auto 1fr auto;
-    gap: 12px;
-    padding: 0 14px;
+    width: min(calc(100% - 80px), 320px);
+    min-height: 78px;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 0 16px;
     transform: translateX(-50%);
+  }
+
+  .anatomy-nav::before {
+    right: 0;
+    left: 0;
+  }
+
+  .anatomy-nav .brand {
+    justify-self: start;
+    transform: translateY(6px) rotate(-3deg);
   }
 
   .anatomy-nav .brand-mark {
@@ -1370,12 +1399,13 @@ input[type='date'].input {
   }
 
   .anatomy-nav-signin {
-    grid-column: 3;
+    grid-column: 2;
+    transform: translateY(6px) rotate(3deg);
   }
 
   .anatomy-body {
     width: calc(100% - 24px);
-    margin-top: -18px;
+    margin-top: -42px;
   }
 
   .anatomy-intro {
@@ -1469,16 +1499,17 @@ input[type='date'].input {
 
 @media (max-width: 560px) {
   .anatomy-head {
-    height: 350px;
+    height: 440px;
   }
 
   .anatomy-head-art {
-    width: 670px;
+    width: 586px;
   }
 
   .anatomy-nav {
-    top: 106px;
-    min-height: 64px;
+    top: 124px;
+    width: min(calc(100% - 104px), 274px);
+    min-height: 70px;
   }
 
   .anatomy-nav-signin {
