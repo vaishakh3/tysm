@@ -198,93 +198,104 @@ body::after {
 
 .anatomy-nav {
   position: absolute;
-  top: 27.6%;
-  left: 28.5%;
+  top: 25.4%;
+  left: 27.2%;
   z-index: 4;
-  width: 43%;
-  min-height: 20%;
-  display: grid;
-  grid-template-columns: auto 1fr 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 0 3.5%;
+  width: 45.6%;
+  aspect-ratio: 640 / 180;
   color: #171510;
 }
 
-.anatomy-nav::before {
-  content: '';
-  position: absolute;
-  right: 3%;
-  top: 17%;
-  bottom: auto;
-  left: 3%;
-  height: 66%;
-  border-top: 1px solid rgba(24, 21, 16, 0.24);
-  border-radius: 50% 50% 0 0;
-  pointer-events: none;
+.anatomy-nav-curve {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.anatomy-nav .brand {
-  color: #171510;
-  transform: translateY(20px) rotate(-5deg);
-}
-
-.anatomy-nav .brand-mark {
-  font-size: 31px;
-}
-
-.anatomy-nav .brand-mark b {
-  color: #171510;
-}
-
-.anatomy-nav-links {
-  display: contents;
-}
-
-.anatomy-nav-links a {
-  position: relative;
-  z-index: 1;
-  justify-self: center;
-  padding: 10px 4px;
-  color: #332e25;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
+.anatomy-curve-link {
+  color: #2b271f;
+  cursor: pointer;
+  outline: none;
   text-decoration: none;
-  white-space: nowrap;
 }
 
-.anatomy-nav-links a:first-child {
-  transform: translateY(-10px) rotate(-2deg);
+.anatomy-curve-link text {
+  fill: currentColor;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
-.anatomy-nav-links a:last-child {
-  transform: translateY(-10px) rotate(2deg);
+.anatomy-curve-brand text {
+  fill: #171510;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 42px;
+  font-weight: 400;
 }
 
-.anatomy-nav-links a::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 4px;
-  left: 0;
-  height: 2px;
-  background: var(--lime-deep);
-  transform: scaleX(1);
-  transform-origin: center;
-  transition: transform 0.18s ease;
+.anatomy-curve-link text,
+.anatomy-curve-underline,
+.anatomy-curve-signin-shape {
+  transition:
+    fill 0.18s ease,
+    stroke 0.18s ease,
+    filter 0.18s ease;
 }
 
-.anatomy-nav-links a:hover {
-  color: #000;
+.anatomy-curve-link:hover text,
+.anatomy-curve-link:focus-visible text {
+  fill: #000;
 }
 
-.anatomy-nav-links a:hover::after {
-  transform: translateY(-1px) scaleX(1);
+.anatomy-curve-link:focus-visible text {
+  filter: drop-shadow(0 0 4px rgba(212, 255, 63, 0.9));
+}
+
+.anatomy-curve-underline {
+  fill: none;
+  stroke: var(--lime-deep);
+  stroke-linecap: round;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.anatomy-curve-link:hover .anatomy-curve-underline,
+.anatomy-curve-link:focus-visible .anatomy-curve-underline {
+  stroke: #8fba00;
+  filter: drop-shadow(0 0 3px rgba(212, 255, 63, 0.55));
+}
+
+.anatomy-curve-signin-shape {
+  fill: #171510;
+  stroke: #171510;
+  stroke-width: 2;
+}
+
+.anatomy-curve-signin text {
+  fill: var(--lime);
+  font-size: 20px;
+  font-weight: 800;
+  font-style: italic;
+}
+
+.anatomy-curve-signin:hover text,
+.anatomy-curve-signin:focus-visible text {
+  fill: #fff;
+}
+
+.anatomy-curve-signin:hover .anatomy-curve-signin-shape,
+.anatomy-curve-signin:focus-visible .anatomy-curve-signin-shape {
+  fill: #000;
+  filter: drop-shadow(0 5px 7px rgba(0, 0, 0, 0.22));
+}
+
+.anatomy-nav-mobile {
+  display: none;
 }
 
 .anatomy-nav-signin {
-  z-index: 1;
   min-height: 36px;
   padding: 8px 13px;
   border: 1px solid #171510;
@@ -295,7 +306,6 @@ body::after {
   font: inherit;
   font-size: 12px;
   font-weight: 800;
-  transform: translateY(20px) rotate(5deg);
   white-space: nowrap;
 }
 
@@ -1324,23 +1334,16 @@ input[type='date'].input {
 }
 
 @media (min-width: 821px) and (max-width: 980px) {
-  .anatomy-nav {
-    gap: 4px;
-    padding-inline: 2.5%;
+  .anatomy-curve-link text {
+    font-size: 18px;
   }
 
-  .anatomy-nav .brand-mark {
-    font-size: 24px;
+  .anatomy-curve-brand text {
+    font-size: 38px;
   }
 
-  .anatomy-nav-links a {
-    font-size: 10px;
-  }
-
-  .anatomy-nav-signin {
-    min-height: 31px;
-    padding: 7px 10px;
-    font-size: 10px;
+  .anatomy-curve-signin text {
+    font-size: 18px;
   }
 }
 
@@ -1373,16 +1376,22 @@ input[type='date'].input {
     top: 155px;
     left: 50%;
     width: min(calc(100% - 80px), 320px);
+    aspect-ratio: auto;
     min-height: 78px;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    padding: 0 16px;
     transform: translateX(-50%);
   }
 
-  .anatomy-nav::before {
-    right: 0;
-    left: 0;
+  .anatomy-nav-curve {
+    display: none;
+  }
+
+  .anatomy-nav-mobile {
+    display: grid;
+    min-height: 78px;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
   }
 
   .anatomy-nav .brand {
@@ -1392,10 +1401,6 @@ input[type='date'].input {
 
   .anatomy-nav .brand-mark {
     font-size: 25px;
-  }
-
-  .anatomy-nav-links {
-    display: none;
   }
 
   .anatomy-nav-signin {

@@ -296,14 +296,72 @@ export function Landing() {
             alt="A sculptural event host wearing a paper TYSM navigation visor"
           />
           <nav className="anatomy-nav" aria-label="Main navigation">
-            <Brand tagline={false} />
-            <div className="anatomy-nav-links">
-              <a href="#feedback-preview">Feedback</a>
-              <a href="#how-it-works">How it works</a>
+            <svg
+              className="anatomy-nav-curve"
+              viewBox="0 0 640 180"
+              aria-labelledby="anatomy-nav-title"
+            >
+              <title id="anatomy-nav-title">TYSM navigation</title>
+              <defs>
+                <path id="nav-brand-curve" d="M 48 126 Q 121 91 198 74" />
+                <path id="nav-feedback-curve" d="M 188 75 Q 252 55 314 53" />
+                <path id="nav-how-curve" d="M 326 53 Q 398 57 462 79" />
+                <path id="nav-signin-curve" d="M 466 91 Q 528 111 594 139" />
+              </defs>
+
+              <a className="anatomy-curve-link anatomy-curve-brand" href="/">
+                <text>
+                  <textPath href="#nav-brand-curve" startOffset="50%" textAnchor="middle">
+                    TYSM
+                  </textPath>
+                </text>
+              </a>
+
+              <a className="anatomy-curve-link" href="#feedback-preview">
+                <text>
+                  <textPath href="#nav-feedback-curve" startOffset="50%" textAnchor="middle">
+                    Feedback
+                  </textPath>
+                </text>
+                <path className="anatomy-curve-underline" d="M 202 85 Q 252 69 300 67" />
+              </a>
+
+              <a className="anatomy-curve-link" href="#how-it-works">
+                <text>
+                  <textPath href="#nav-how-curve" startOffset="50%" textAnchor="middle">
+                    How it works
+                  </textPath>
+                </text>
+                <path className="anatomy-curve-underline" d="M 339 68 Q 398 71 449 89" />
+              </a>
+
+              <a
+                className="anatomy-curve-link anatomy-curve-signin"
+                href="/"
+                aria-label="Sign in with Google"
+                onClick={(event) => {
+                  event.preventDefault()
+                  void signInWithGoogle('/')
+                }}
+              >
+                <path
+                  className="anatomy-curve-signin-shape"
+                  d="M 462 76 Q 528 95 595 124 Q 611 131 607 146 Q 602 163 581 158 Q 520 139 459 115 Q 444 108 448 92 Q 451 80 462 76 Z"
+                />
+                <text>
+                  <textPath href="#nav-signin-curve" startOffset="50%" textAnchor="middle">
+                    Sign in
+                  </textPath>
+                </text>
+              </a>
+            </svg>
+
+            <div className="anatomy-nav-mobile">
+              <Brand tagline={false} />
+              <button className="anatomy-nav-signin" onClick={() => signInWithGoogle('/')}>
+                Sign in
+              </button>
             </div>
-            <button className="anatomy-nav-signin" onClick={() => signInWithGoogle('/')}>
-              Sign in
-            </button>
           </nav>
         </header>
 
